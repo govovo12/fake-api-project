@@ -17,6 +17,7 @@ def print_structure(root_path, indent=""):
             print(f"{indent}{item}")
 
 if __name__ == "__main__":
-    root_dir = os.path.dirname(os.path.abspath(__file__))
+    # 🔧 修正：從 workspace 往上層找，抓 fake-api-project 根目錄
+    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     print("=== 專案資料夾結構清單（已排除常見雜項）===\n")
     print_structure(root_dir)
