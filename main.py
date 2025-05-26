@@ -2,7 +2,13 @@
 import argparse
 import importlib
 from pathlib import Path
+# === 加入 workspace 根目錄到 PYTHONPATH，支援 controller/modules/config 匯入 ===
+import sys
+from pathlib import Path
 
+ROOT_PATH = Path(__file__).resolve().parent / "workspace"
+if str(ROOT_PATH) not in sys.path:
+    sys.path.insert(0, str(ROOT_PATH))
 def find_module_by_filename(base_dir: Path, target_filename: str):
     for py_file in base_dir.rglob("*.py"):
         if py_file.stem == target_filename:

@@ -41,7 +41,6 @@ def run_generate_account(config=ACCOUNT_GEN_CONFIG):
         }
 
 
-__task_info__ = {
-    "desc": "產生假帳號資料並輸出至測資檔",
-    "entry": run_generate_account
-}
+def run_account_generator_task():
+    """供 CLI task 或 controller 使用的簡化任務入口"""
+    run_generate_account()
