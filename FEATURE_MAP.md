@@ -40,3 +40,38 @@
 ├── run_log.txt       ⬅ 所有測試 log 匯整於此
 ├── unit_report.html  ⬅ 單元測試報告
 └── integration_report.html ⬅ 整合測試報告
+
+---
+
+### 🔹 登入模組 | login
+
+📁 workspace/modules/login/
+├── login_schema.py       ✅ 資料模型定義
+├── login_reader.py       ✅ 測資讀取，旗標式路徑自動定位 json
+├── login_executor.py     ✅ 發送登入請求，整合錯誤處理與重試邏輯
+├── login_token_writer.py ✅ 儲存 token 至指定位置
+
+📁 workspace/controller/login_controller.py
+└── ✅ 控制層模組，整合登入流程（含暫時性呼叫帳號產生/註冊模組）
+
+📁 workspace/task/task_login.py
+└── ✅ 註冊 __task_info__ 任務，可由 main.py 透過 --task login 執行
+
+📁 workspace/tests/integration/test_login.py
+└── ⏳ 預定實作：整合登入流程測試，驗證 token 回傳與錯誤處理
+
+---
+
+### 🔹 註冊模組 | account_register
+
+📁 workspace/modules/account_register.py
+└── ⏳ 預定實作：根據帳號測資向 Fake Store API 註冊用戶
+
+📁 workspace/controller/account_register_controller.py
+└── ⏳ 預定實作：調用註冊模組，包裝回傳格式，統一 log 處理
+
+📁 workspace/task/task_account_register.py
+└── ⏳ 預定實作：註冊 __task_info__，供 main.py 透過 --task account_register 執行
+
+📁 workspace/tests/integration/test_account_register.py
+└── ⏳ 預定實作：驗證註冊流程成功與帳號重複處理（包含 UUID 檢查）
