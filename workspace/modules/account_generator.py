@@ -10,7 +10,19 @@ def generate_account(username_cfg: dict, password_cfg: dict, random_fn) -> dict:
         "password": generate_password(**password_cfg, random_fn=random_fn)
     }
 
-def save_account_to_json(account: dict, output_path, json_writer) -> str:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    json_writer(account, output_path)
-    return str(output_path)
+def generate_accounts(username_cfg: dict, password_cfg: dict, random_fn, count: int) -> list:
+    return [
+        generate_account(username_cfg, password_cfg, random_fn)
+        for _ in range(count)
+    ]
+
+def save_account_to_json(data, path, writer_fn):
+    # ✅ 若資料夾不存在就建立（這行最重要）
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    # 若只是一組 dict，包成 list 寫入
+    if isinstance(data, dict):
+        data = [data]
+    writer_fn(data, path)
+    return str(path)
+

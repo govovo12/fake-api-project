@@ -1,34 +1,37 @@
-# === Python 編譯中繼檔 ===
+# === Python 基本項目 ===
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
-
-# === 測試框架快取 ===
-.pytest_cache/
-coverage.xml
-*.cover
-*.coverage
+*.swp
+*.DS_Store
+*.log
 
 # === 虛擬環境 ===
 venv/
+.env/
 
-# === VS Code 等 IDE 設定檔 ===
+# === 測試產物與報告 ===
+workspace/reports/
+workspace/.pytest_cache/
+workspace/.coverage
+coverage.xml
+*.html
+
+# === IDE 與開發環境 ===
 .vscode/
 .idea/
+*.code-workspace
 
-# === 測試輸出資料 ===
-logs/
-reports/
-
-# === 系統雜項檔案 ===
-.DS_Store
-Thumbs.db
-
-# === 測試用輸出 / 暫存資料（如果有）===
-*.log
+# === 自動生成與暫存資料 ===
 *.tmp
 *.bak
 
-# === Jupyter 或開發用筆記（如果未來有）===
-*.ipynb_checkpoints
+# === 測資（僅忽略個人資料，不忽略測試範例）===
+# 保留 testdata/json 範例測資（如 valid_case.json）
+# 忽略自動產生的暫存資料
+workspace/testdata/**/temp_*.json
+
+# === env 設定說明 ===
+# 保留說明用 env 檔（不含敏感資訊）
+!workspace/config/envs/account_gen.env
