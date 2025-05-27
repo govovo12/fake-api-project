@@ -1,7 +1,8 @@
 import tempfile
 import json
-from workspace.utils.json_helper import write_json
+from utils.json_helper import write_json
 from pathlib import Path
+
 
 def test_write_json_creates_file():
     data = {"key": "value"}

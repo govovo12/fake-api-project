@@ -1,5 +1,5 @@
 import pytest
-from workspace.utils.random_factory import simple_random_string
+from utils.random_factory import simple_random_string
 
 class TestRandomFactory:
 

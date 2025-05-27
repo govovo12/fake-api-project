@@ -33,6 +33,8 @@ def main():
         task_module = importlib.import_module(module_path)
 
         if hasattr(task_module, "__task_info__"):
+            print("DEBUG: 進入 entry() 前，entry =", entry)
+
             task_meta = getattr(task_module, "__task_info__")
             entry = task_meta.get("entry")
             desc = task_meta.get("desc", "")

@@ -1,6 +1,12 @@
 import re
-from workspace.utils.logger import log_info, log_error
-from workspace.config.rules.error_codes import ACCOUNT_GEN_FAIL
+from utils.logger.logger import log_info, log_error
+from config.rules.error_codes import ACCOUNT_GEN_FAIL
+import pytest
+
+pytestmark = [pytest.mark.account_generator, pytest.mark.unit]
+
+
+pytestmark = [pytest.mark.account_generator, pytest.mark.unit]
 
 def test_log_info_output(capfd):
     log_info("測試 info log")

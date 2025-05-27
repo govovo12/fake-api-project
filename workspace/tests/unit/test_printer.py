@@ -1,5 +1,10 @@
 import re
-from workspace.utils.printer import print_info, print_error
+from utils.printer import print_info, print_error
+import pytest
+
+pytestmark = [pytest.mark.account_generator, pytest.mark.unit]
+
+
 
 def test_print_info_format(capfd):
     print_info("info message")

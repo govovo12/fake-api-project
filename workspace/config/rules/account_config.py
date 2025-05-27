@@ -1,12 +1,9 @@
-# workspace/config/rules/account_config.py
-
 from dotenv import load_dotenv
-from pathlib import Path
+from config.paths import ACCOUNT_ENV_PATH
 import os
 
-# 正確載入 .env 檔案（account_gen.env）
-env_path = Path(__file__).resolve().parents[1] / "envs" / "account_gen.env"
-load_dotenv(dotenv_path=env_path)
+# 正確載入 .env 檔案
+load_dotenv(dotenv_path=ACCOUNT_ENV_PATH)
 
 # Debug 用：確認有成功讀到環境變數
 print("USERNAME_PREFIX:", os.getenv("USERNAME_PREFIX"))

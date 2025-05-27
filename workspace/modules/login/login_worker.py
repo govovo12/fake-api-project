@@ -1,9 +1,13 @@
+import os
 import requests
+from dotenv import load_dotenv
+from config.paths import LOGIN_ENV_PATH
 from .login_schema import LoginRequest, LoginResult
 from config.rules import error_codes
 from config.rules.login_config import LOGIN_HEADERS, LOGIN_TIMEOUT
-import os
 
+# ✅ 統一從 LOGIN_ENV_PATH 載入 .env 檔案
+load_dotenv(dotenv_path=LOGIN_ENV_PATH)
 
 
 def do_login(req: LoginRequest) -> LoginResult:

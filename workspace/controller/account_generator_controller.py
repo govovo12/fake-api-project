@@ -1,11 +1,11 @@
 # workspace/controller/account_generator_controller.py
 
-from workspace.config.rules.account_config import ACCOUNT_GEN_CONFIG
-from workspace.config.rules.paths import BASE_PATH
-from workspace.factory.module_factory import get_account_generator_module
-from workspace.utils.logger import log_info, log_error
+from config.rules.account_config import ACCOUNT_GEN_CONFIG
+from config.paths import ACCOUNT_GEN_DATA_JSON
+from factory.module_factory import get_account_generator_module
+from utils.logger.logger import log_info, log_error
 
-
+print("[DEBUG] run_generate_account 啟動中...")
 def run_generate_account(config=ACCOUNT_GEN_CONFIG):
     deps = get_account_generator_module()
 
@@ -15,7 +15,7 @@ def run_generate_account(config=ACCOUNT_GEN_CONFIG):
     password_cfg = rules["password"]
     count = params.get("generate_count", 1)
 
-    path = BASE_PATH / "testdata" / "login" / "valid_case.json"
+    path = ACCOUNT_GEN_DATA_JSON
 
     try:
         log_info(f"開始產生帳號，共 {count} 組")

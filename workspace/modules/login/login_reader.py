@@ -1,14 +1,11 @@
 import json
-from pathlib import Path
 from typing import List
+from pathlib import Path
 from .login_schema import LoginRequest
+from config.paths import ACCOUNT_GEN_DATA_JSON
 
 
-BASE_DIR = Path(__file__).resolve().parents[2]  # 回到 workspace/
-DEFAULT_LOGIN_JSON = BASE_DIR / "testdata" / "login" / "valid_case.json"
-
-
-def read_login_requests(json_path: Path = DEFAULT_LOGIN_JSON) -> List[LoginRequest]:
+def read_login_requests(json_path: Path = ACCOUNT_GEN_DATA_JSON) -> List[LoginRequest]:
     """
     從指定 JSON 讀取 login 測資，產生 LoginRequest 清單
     JSON 格式需為：

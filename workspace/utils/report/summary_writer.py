@@ -1,9 +1,10 @@
 import re
 import time
-from pathlib import Path
+from config.paths import LOG_PATH
 
-log_path = Path("workspace/reports/run_log.txt")
+log_path = LOG_PATH
 summary_lines = []
+
 
 unit_count = 0
 unit_passed = 0

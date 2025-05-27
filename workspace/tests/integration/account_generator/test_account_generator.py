@@ -1,7 +1,7 @@
-# tests/test_account_generator.py
-
 import pytest
-from workspace.controller.account_generator_controller import run_generate_account
+from controller.account_generator_controller import run_generate_account
+
+pytestmark = [pytest.mark.account_generator, pytest.mark.integration]
 
 class TestAccountGenerator:
 

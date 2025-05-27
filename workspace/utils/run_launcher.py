@@ -1,35 +1,32 @@
 # === 確保 workspace 為 PYTHONPATH 根目錄（支援本機與 CI）===
 import sys
 from pathlib import Path
+from datetime import datetime
+import subprocess
+
+from config.paths import REPORT_PATH, TESTS_ROOT, LOG_PATH
 
 ROOT_PATH = Path(__file__).resolve().parents[2]
 if str(ROOT_PATH) not in sys.path:
     sys.path.insert(0, str(ROOT_PATH))
 
-import subprocess
-from datetime import datetime
+UNIT_TESTS = TESTS_ROOT / "unit"
+INTEGRATION_TESTS = TESTS_ROOT / "integration"
+SUMMARY_WRITER = REPORT_PATH.parent / "report" / "summary_writer.py"
+PYTHON_EXE = Path("venv/Scripts/python.exe").resolve()
 
-BASE_DIR = ROOT_PATH
-REPORT_DIR = BASE_DIR / "workspace" / "reports"
-LOG_PATH = REPORT_DIR / "run_log.txt"
-UNIT_TESTS = BASE_DIR / "workspace" / "tests" / "unit"
-INTEGRATION_TESTS = BASE_DIR / "workspace" / "tests" / "integration"
-SUMMARY_WRITER = BASE_DIR / "workspace" / "utils" / "summary_writer.py"
-PYTHON_EXE = BASE_DIR / "venv" / "Scripts" / "python.exe"
-
-REPORT_DIR.mkdir(parents=True, exist_ok=True)
-
+REPORT_PATH.mkdir(parents=True, exist_ok=True)
 
 def run_pytest(label, test_path, report_name):
     print(f"[TEST] Running {label} tests...")
-    report_path = REPORT_DIR / report_name
+    report_path = REPORT_PATH / report_name
 
     result = subprocess.run([
         str(PYTHON_EXE), "-m", "pytest", "-v", "--color=no", "--capture=tee-sys",
         str(test_path),
         f"--html={report_path}",
         "--self-contained-html"
-    ], cwd=str(BASE_DIR), capture_output=True, text=True, encoding="utf-8", errors="ignore")
+    ], cwd=str(ROOT_PATH), capture_output=True, text=True, encoding="utf-8", errors="ignore")
 
     with LOG_PATH.open("a", encoding="utf-8") as log_file:
         log_file.write(f"\n===== {label.upper()} TEST STARTED @ {datetime.now()} =====\n")
@@ -42,7 +39,6 @@ def run_pytest(label, test_path, report_name):
 
     print(f"[PASS] {label} tests passed.")
     return True
-
 
 def main():
     LOG_PATH.write_text("", encoding="utf-8")
@@ -59,7 +55,6 @@ def main():
     subprocess.run([str(PYTHON_EXE), str(SUMMARY_WRITER)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     print("[DONE] All tests completed successfully.")
-
 
 if __name__ == "__main__":
     main()
