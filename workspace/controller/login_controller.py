@@ -5,8 +5,9 @@ from modules.login.login_executor import execute_login
 from modules.login.login_token_writer import store_token
 from modules.login.login_schema import LoginResult
 from config.rules.error_codes import ERROR_MESSAGES
-from utils.print.printer import print_info, print_warn, print_errorfrom controller.account_generator_controller import run_account_generator_task
-from typing import List
+from utils.print.printer import print_info, print_warn, print_error
+from controller.account_generator_controller import run_account_generator_task
+
 
 
 # TODO: ⚠ 暫時自動產生帳號測資，未來主流程完成後請改由外部注入

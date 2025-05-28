@@ -2,7 +2,8 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-from controller import log_controller
+from workspace.controller import log_controller
+from workspace.config import paths
 
 _env_loaded = False
 

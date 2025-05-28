@@ -1,0 +1,6 @@
+{
+  "python.analysis.extraPaths": [
+    "./workspace"
+  ],
+  "python.envFile": "${workspaceFolder}/workspace/config/envs/telegram.env"
+}
