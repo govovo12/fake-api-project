@@ -6,6 +6,9 @@ from pathlib import Path
 import sys
 from pathlib import Path
 
+
+
+
 ROOT_PATH = Path(__file__).resolve().parent / "workspace"
 if str(ROOT_PATH) not in sys.path:
     sys.path.insert(0, str(ROOT_PATH))
@@ -21,6 +24,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--task", required=True, help="模組檔名（例如 task_login）")
     args = parser.parse_args()
+    print("[main] 開始執行任務：", args.task)
 
     base_dir = Path(__file__).resolve().parent / "workspace"
     module_path = find_module_by_filename(base_dir, args.task)
@@ -30,14 +34,17 @@ def main():
         return
 
     try:
+        print(f"[main] 嘗試載入模組路徑：{module_path}")
         task_module = importlib.import_module(module_path)
+        print("[main] task 模組已載入成功")
 
         if hasattr(task_module, "__task_info__"):
-            print("DEBUG: 進入 entry() 前，entry =", entry)
-
             task_meta = getattr(task_module, "__task_info__")
             entry = task_meta.get("entry")
-            desc = task_meta.get("desc", "")
+            desc = task_meta.get("description", "")
+            print("DEBUG: 抓到 entry =", entry)
+            print("DEBUG: entry 的類型 =", type(entry))
+
             if callable(entry):
                 print(f"✅ 執行 {module_path} 任務：{desc}")
                 entry()
@@ -50,6 +57,8 @@ def main():
 
     except Exception as e:
         print(f"❌ 模組執行錯誤：{e}")
+
+
 
 if __name__ == "__main__":
     main()

@@ -2,76 +2,41 @@
 
 ---
 
-### 🔹 測資模組 | account_generator
+### 🔹 工具模組 | utils
 
-📁 workspace/modules/account_generator.py
-├── ✅ 帳號產生核心模組（支援單組/多組產生）
-├── ✅ 採用參數化控制帳號格式（由 .env.account_gen 管理）
-├── ✅ 自動寫入測資 json，供 login 登入測試使用
-
-📁 workspace/controller/account_generator_controller.py
-└── ✅ 控制層模組，接收 task_info 呼叫，觸發模組執行 + log 記錄
-
-📁 workspace/task/task_account_generator.py
-└── ✅ 註冊 __task_info__ 任務，可由 main.py 透過 --task account_generator 執行
-
-📁 workspace/tests/integration/test_account_generator.py
-└── ✅ 整合測試：驗證多組帳號產生流程，並檢查輸出 json 完整性
+📁 workspace/utils/
+├── logger/logger.py              ✅ log 記錄模組（統一格式、寫檔）
+├── print/printer.py              ✅ 終端輸出格式化（含色碼）
+├── print/color_helper.py         ✅ ANSI 色碼輔助工具
+├── retry/retry_handler.py        ✅ retry 控制邏輯（支援 backoff）
+├── request/request_handler.py    ✅ requests 封裝，含 log、錯誤處理
+├── data/data_loader.py           ✅ JSON 測資載入工具
+├── env/env_manager.py            ✅ .env 載入與路徑管理
+├── time/time_helper.py           ✅ 時間轉換與 sleep 工具
+├── asserts/assert_helper.py      ✅ 常用斷言封裝（符合蝦皮測試風格）
+├── file/file_helper.py           ✅ 檔案處理工具（建立 temp file, 檢查存在）
+├── file/folder_helper.py         ✅ 資料夾處理工具（ensure, 清空）
 
 📁 workspace/tests/unit/
-├── test_json_helper.py
-├── test_logger.py
-├── test_printer.py
-└── test_random_factory.py
-    ✅ 工具層模組測試已完整覆蓋
+├── logger/test_logger.py
+├── print/test_printer_unit.py
+├── retry/test_retry_handler_unit.py
+├── request/test_request_handler_unit.py
+├── data/test_data_loader_unit.py
+├── env/test_env_manager_unit.py
+├── time/test_time_helper_unit.py
+├── asserts/test_assert_helper_unit.py
+├── file/test_file_folder_helper_unit.py
+
+📁 pytest.ini
+└── ✅ 測試標記已註冊：log, printer, retry, request, data, env, time, asserts, file
 
 📁 bat/run_all_tests.bat
-└── ✅ 測試啟動入口：一鍵執行 unit + integration + 產出報告
-
-📁 workspace/utils/run_launcher.py
-├── ✅ 控制整體測試流程：分段執行 unit / integration 測試
-├── ✅ 支援 venv 啟動與自動修正路徑（避免報告錯位）
-└── ✅ 匯整 pytest 執行 log 至 run_log.txt，並呼叫 summary_writer
+└── ✅ 一鍵執行所有測試（unit + integration）+ 產出報告
 
 📁 workspace/utils/summary_writer.py
-└── ✅ 統計測試通過/失敗數量，支援換行/異常格式，輸出摘要區塊
-
-📁 workspace/reports/
-├── run_log.txt       ⬅ 所有測試 log 匯整於此
-├── unit_report.html  ⬅ 單元測試報告
-└── integration_report.html ⬅ 整合測試報告
+└── ✅ 測試統計摘要輸出工具（log 整理）
 
 ---
 
-### 🔹 登入模組 | login
-
-📁 workspace/modules/login/
-├── login_schema.py       ✅ 資料模型定義
-├── login_reader.py       ✅ 測資讀取，旗標式路徑自動定位 json
-├── login_executor.py     ✅ 發送登入請求，整合錯誤處理與重試邏輯
-├── login_token_writer.py ✅ 儲存 token 至指定位置
-
-📁 workspace/controller/login_controller.py
-└── ✅ 控制層模組，整合登入流程（含暫時性呼叫帳號產生/註冊模組）
-
-📁 workspace/task/task_login.py
-└── ✅ 註冊 __task_info__ 任務，可由 main.py 透過 --task login 執行
-
-📁 workspace/tests/integration/test_login.py
-└── ⏳ 預定實作：整合登入流程測試，驗證 token 回傳與錯誤處理
-
----
-
-### 🔹 註冊模組 | account_register
-
-📁 workspace/modules/account_register.py
-└── ⏳ 預定實作：根據帳號測資向 Fake Store API 註冊用戶
-
-📁 workspace/controller/account_register_controller.py
-└── ⏳ 預定實作：調用註冊模組，包裝回傳格式，統一 log 處理
-
-📁 workspace/task/task_account_register.py
-└── ⏳ 預定實作：註冊 __task_info__，供 main.py 透過 --task account_register 執行
-
-📁 workspace/tests/integration/test_account_register.py
-└── ⏳ 預定實作：驗證註冊流程成功與帳號重複處理（包含 UUID 檢查）
+🔹 其餘模組（帳號產生、登入、註冊）目前暫不列入，待重構後更新

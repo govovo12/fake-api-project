@@ -5,8 +5,7 @@ from modules.login.login_executor import execute_login
 from modules.login.login_token_writer import store_token
 from modules.login.login_schema import LoginResult
 from config.rules.error_codes import ERROR_MESSAGES
-from utils.printer import print_info, print_error
-from controller.account_generator_controller import run_account_generator_task
+from utils.print.printer import print_info, print_warn, print_errorfrom controller.account_generator_controller import run_account_generator_task
 from typing import List
 
 

@@ -1,7 +1,7 @@
-import sys
+# utils/logger/log_writer.py
 from config.paths import LOG_PATH
 
-with open(LOG_PATH, "w", encoding="utf-8") as f:
-    for line in sys.stdin:
-        print(line, end="")  # 也印到螢幕
-        f.write(line)
+def write_log(level: str, message: str):
+    with open(LOG_PATH, "a", encoding="utf-8") as f:
+        f.write(f"[{level}] {message}\n")
+
