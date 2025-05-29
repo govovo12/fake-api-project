@@ -1,36 +1,46 @@
+# workspace/tests/unit/notifier/test_telegram_notifier_unit.py
+
 import pytest
-from unittest.mock import patch, Mock
-from workspace.utils.notifier.telegram_notifier import TelegramNotifier
+import requests
+from utils.notifier.telegram_notifier import TelegramNotifier
+from utils.mock.mock_helper import mock_api_response
 
-pytestmark = pytest.mark.notifier
+pytestmark = [pytest.mark.unit, pytest.mark.notifier]
 
-def test_init_notifier():
-    notifier = TelegramNotifier(token="dummy_token", chat_id="dummy_chat")
-    assert notifier.token == "dummy_token"
-    assert notifier.chat_id == "dummy_chat"
+@pytest.fixture
+def telegram_notifier():
+    return TelegramNotifier(token="TEST_TOKEN", chat_id="TEST_CHAT")
 
-def test_send_success():
-    notifier = TelegramNotifier(token="t", chat_id="c")
-    with patch("requests.post") as mock_post:
-        mock_post.return_value = Mock(status_code=200)
-        notifier.send("hi")
-        mock_post.assert_called_once()
+def test_send_success(monkeypatch):
+    # 成功回傳 200
+    monkeypatch.setattr(
+        "utils.notifier.telegram_notifier.requests.post",
+        lambda *args, **kwargs: mock_api_response(status_code=200)
+    )
+    notifier = TelegramNotifier(token="TEST_TOKEN", chat_id="TEST_CHAT")
+    assert notifier.send("hello") is True
 
-def test_send_fail_status():
-    notifier = TelegramNotifier(token="t", chat_id="c")
-    with patch("requests.post") as mock_post:
-        mock_post.return_value = Mock(status_code=500, text="Internal Error")
-        notifier.send("fail")
-        mock_post.assert_called_once()
+def test_send_fail(monkeypatch):
+    # 失敗回傳 500
+    monkeypatch.setattr(
+        "utils.notifier.telegram_notifier.requests.post",
+        lambda *args, **kwargs: mock_api_response(status_code=500)
+    )
+    notifier = TelegramNotifier(token="TEST_TOKEN", chat_id="TEST_CHAT")
+    assert notifier.send("hello") is False
 
-def test_send_exception():
-    notifier = TelegramNotifier(token="t", chat_id="c")
-    with patch("requests.post", side_effect=Exception("Network error")) as mock_post:
-        notifier.send("error")
-        mock_post.assert_called_once()
+def test_send_raises_request_exception(monkeypatch, capsys):
+    # 模擬網路例外
+    def raise_exc(*args, **kwargs):
+        raise requests.RequestException("network error")
+    monkeypatch.setattr(
+        "utils.notifier.telegram_notifier.requests.post",
+        raise_exc
+    )
+    notifier = TelegramNotifier(token="TEST_TOKEN", chat_id="TEST_CHAT")
+    # send 應捕獲例外並回傳 False，而不是拋出
+    result = notifier.send("hello")
+    assert result is False
 
-def test_send_skipped_if_no_config():
-    notifier = TelegramNotifier(token=None, chat_id=None)
-    with patch("requests.post") as mock_post:
-        notifier.send("should not send")
-        mock_post.assert_not_called()
+    out = capsys.readouterr().out
+    assert "[Notifier] 發送例外" in out

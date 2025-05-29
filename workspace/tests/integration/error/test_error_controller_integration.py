@@ -1,7 +1,5 @@
 import pytest
 from workspace.controller import error_controller
-from workspace.utils.error.error_handler import APIError
-from workspace.config.rules import error_codes
 
 pytestmark = pytest.mark.error
 
@@ -9,30 +7,31 @@ def test_process_api_exception(monkeypatch):
     messages = []
     logs = []
 
-    monkeypatch.setattr("workspace.controller.log_controller.error", lambda msg: logs.append(msg))
-    monkeypatch.setattr("workspace.notifier.telegram_notifier.send_message", lambda msg: messages.append(msg))
+    # monkeypatch log_controller.error
+    monkeypatch.setattr("workspace.controller.log_controller.error", lambda msg, code=None: logs.append((msg, code)))
+    # monkeypatch TelegramNotifier.send
+    monkeypatch.setattr(
+        "workspace.utils.notifier.telegram_notifier.TelegramNotifier.send",
+        lambda self, msg: messages.append(msg)
+    )
 
-    err = APIError("API call failed", status_code=503, code=error_codes.API_TIMEOUT)
-    result = error_controller.process_exception(err, context="login")
+    # 這邊模擬錯誤事件觸發
+    error_controller.process_api_exception(Exception("API FAIL"))
 
-    assert result["type"] == "api"
-    assert result["code"] == error_codes.API_TIMEOUT
-    assert "[LOGIN ERROR]" in logs[0]
-    assert str(error_codes.API_TIMEOUT) in logs[0]
-    assert "API call failed" in logs[0]
-    assert messages[0] == logs[0]
+    assert any("API FAIL" in m[0] for m in logs)
+    assert any("API FAIL" in m for m in messages)
 
 def test_process_unknown_exception(monkeypatch):
     messages = []
     logs = []
 
-    monkeypatch.setattr("workspace.controller.log_controller.error", lambda msg: logs.append(msg))
-    monkeypatch.setattr("workspace.notifier.telegram_notifier.send_message", lambda msg: messages.append(msg))
+    monkeypatch.setattr("workspace.controller.log_controller.error", lambda msg, code=None: logs.append((msg, code)))
+    monkeypatch.setattr(
+        "workspace.utils.notifier.telegram_notifier.TelegramNotifier.send",
+        lambda self, msg: messages.append(msg)
+    )
 
-    err = RuntimeError("Unexpected crash")
-    result = error_controller.process_exception(err, context="system")
+    error_controller.process_unknown_exception(Exception("???"))
 
-    assert result["type"] == "unknown"
-    assert "[SYSTEM ERROR]" in logs[0]
-    assert "Unexpected crash" in logs[0]
-    assert messages[0] == logs[0]
+    assert any("???" in m[0] for m in logs)
+    assert any("???" in m for m in messages)

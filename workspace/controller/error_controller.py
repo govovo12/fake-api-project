@@ -16,3 +16,23 @@ def process_exception(e, context="system"):
     send_message(log_msg)  # 發送到 Telegram
 
     return result
+
+def send_message(msg):
+    """
+    發送 Telegram 通知。
+    """
+    notifier = NotifierFactory.get_notifier()
+    if notifier:
+        notifier.send(msg)
+
+def process_api_exception(e):
+    """
+    統一處理 API 錯誤
+    """
+    return process_exception(e, context="api")
+
+def process_unknown_exception(e):
+    """
+    統一處理未知錯誤
+    """
+    return process_exception(e, context="unknown")

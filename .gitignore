@@ -9,7 +9,6 @@ __pycache__/
 
 # === 虛擬環境 ===
 venv/
-.env/
 
 # === 測試產物與報告 ===
 workspace/reports/
@@ -19,7 +18,7 @@ coverage.xml
 *.html
 
 # === IDE 與開發環境 ===
-.vscode/
+
 .idea/
 *.code-workspace
 
@@ -33,5 +32,3 @@ coverage.xml
 workspace/testdata/**/temp_*.json
 
 # === env 設定說明 ===
-# 保留說明用 env 檔（不含敏感資訊）
-!workspace/config/envs/account_gen.env

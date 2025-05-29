@@ -1,4 +1,6 @@
 # main.py
+from dotenv import load_dotenv
+load_dotenv()  # 這行就會自動載入根目錄的 .env
 import argparse
 import importlib
 from pathlib import Path

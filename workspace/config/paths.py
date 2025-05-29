@@ -12,11 +12,28 @@ CONFIG_PATH = WORKSPACE_ROOT / "config"
 
 # === utils 子模組 ===
 UTILS_PATH = WORKSPACE_ROOT / "utils"
-TIME_UTILS_PATH = UTILS_PATH / "time"
 ASSERT_UTILS_PATH = UTILS_PATH / "asserts"
-FILE_UTILS_PATH = UTILS_PATH / "file"
 CALLBACK_UTILS_PATH = UTILS_PATH / "callback"
+DATA_UTILS_PATH = UTILS_PATH / "data"
+ENV_UTILS_PATH = UTILS_PATH / "env"
+ERROR_UTILS_PATH = UTILS_PATH / "error"
 EXPORT_UTILS_PATH = UTILS_PATH / "export"
+FAKE_UTILS_PATH = UTILS_PATH / "fake"
+FILE_UTILS_PATH = UTILS_PATH / "file"
+LOGGER_UTILS_PATH = UTILS_PATH / "logger"
+NOTIFIER_UTILS_PATH = UTILS_PATH / "notifier"
+PRINT_UTILS_PATH = UTILS_PATH / "print"
+REPORT_UTILS_PATH = UTILS_PATH / "report"
+REQUEST_UTILS_PATH = UTILS_PATH / "request"
+RETRY_UTILS_PATH = UTILS_PATH / "retry"
+STUB_UTILS_PATH = UTILS_PATH / "stub"
+TIME_UTILS_PATH = UTILS_PATH / "time"
+
+# === utils 單檔工具 ===
+JSON_HELPER_PATH = UTILS_PATH / "json_helper.py"
+RANDOM_FACTORY_PATH = UTILS_PATH / "random_factory.py"
+RUN_LAUNCHER_PATH = UTILS_PATH / "run_launcher.py"
+
 
 # === 測試子模組 ===
 UNIT_TESTS_PATH = TESTS_ROOT / "unit"
@@ -26,10 +43,11 @@ TIME_UNIT_TEST_PATH = UNIT_TESTS_PATH / "time"
 def get_account_json_path(filename: str) -> Path:
     return TESTDATA_PATH / "account" / filename
 
+def get_stub_json_path(filename: str) -> Path:
+    return TESTDATA_PATH / "stub" / filename
+
 # === 預設帳號資料檔案 ===
 DEFAULT_ACCOUNT_FILENAME = "valid_case.json"
-def get_account_json_path(filename: str) -> Path:
-    return TESTDATA_PATH / "account" / filename
 
 def get_default_account_json_path() -> Path:
     return get_account_json_path(DEFAULT_ACCOUNT_FILENAME)
