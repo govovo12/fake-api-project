@@ -1,5 +1,11 @@
 from typing import Callable, Any
 
+def tool(func):
+    """自製工具標記裝飾器，供自動掃描用"""
+    func.is_tool = True
+    return func
+
+@tool
 def run_with_callback(
     target_fn: Callable[[], Any],
     on_success: Callable[[], None] = None,
@@ -13,9 +19,6 @@ def run_with_callback(
     """
     try:
         result = target_fn()
-
-
-        
         if on_success:
             on_success()
         return result

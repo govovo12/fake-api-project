@@ -1,28 +1,34 @@
-from workspace.utils.stub.data_stub import stub_user_payload, stub_cart_payload
-
+from utils.stub.data_stub import (
+    stub_valid_user_json,
+    stub_user_payload,
+    stub_cart_payload,
+)
 
 def get_valid_user_cart_payload():
     """
-    回傳一組有效用戶登入資訊 + 對應購物車資料
-    適用於一般購物流程測試。
+    取得完整使用者與購物車假資料，且 user 必須含 username 欄位
     """
+    user = stub_valid_user_json()
+    # 兼容測試需求：如果 user 裡沒 username，加上預設
+    if "username" not in user:
+        user["username"] = "default_username"
+    cart = stub_cart_payload()
     return {
-        "user": stub_user_payload(),
-        "cart": stub_cart_payload()
+        "user": user,
+        "cart": cart,
     }
-
 
 def get_valid_user_only():
     """
-    回傳一組有效用戶登入資料（不含購物車）
-    適用於登入測試或登入失敗情境前置。
+    取得只有使用者資料的假資料
     """
     return stub_user_payload()
 
-
-def get_cart_only(user_id=3):
+def get_cart_only(user_id=None):
     """
-    回傳一組購物車資料，預設 user_id 為 3
-    可作為已登入狀態後測試購物車模組使用。
+    取得購物車資料，可指定 user_id
     """
-    return stub_cart_payload(user_id=user_id)
+    cart = stub_cart_payload()
+    if user_id is not None:
+        cart["userId"] = user_id
+    return cart

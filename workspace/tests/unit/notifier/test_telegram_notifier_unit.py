@@ -1,46 +1,43 @@
-# workspace/tests/unit/notifier/test_telegram_notifier_unit.py
-
 import pytest
-import requests
 from utils.notifier.telegram_notifier import TelegramNotifier
-from utils.mock.mock_helper import mock_api_response
 
 pytestmark = [pytest.mark.unit, pytest.mark.notifier]
 
-@pytest.fixture
-def telegram_notifier():
-    return TelegramNotifier(token="TEST_TOKEN", chat_id="TEST_CHAT")
-
 def test_send_success(monkeypatch):
-    # 成功回傳 200
+    """[SUCCESS] 發送成功時應回傳 True"""
+    class FakeResponse:
+        status_code = 200
+    def fake_post(url, json, timeout):
+        assert "chat_id" in json and "text" in json
+        return FakeResponse()
+    monkeypatch.setattr("utils.notifier.telegram_notifier.requests.post", fake_post)
+    notifier = TelegramNotifier("FAKE_TOKEN", "FAKE_CHAT_ID")
+    assert notifier.send("測試訊息") is True
+
+def test_send_fail_http(monkeypatch):
+    """[FAIL] 發送失敗 (非 200 status_code) 應回傳 False"""
+    class FakeResponse:
+        status_code = 400
     monkeypatch.setattr(
         "utils.notifier.telegram_notifier.requests.post",
-        lambda *args, **kwargs: mock_api_response(status_code=200)
+        lambda url, json, timeout: FakeResponse()
     )
-    notifier = TelegramNotifier(token="TEST_TOKEN", chat_id="TEST_CHAT")
-    assert notifier.send("hello") is True
+    notifier = TelegramNotifier("FAKE_TOKEN", "FAKE_CHAT_ID")
+    assert notifier.send("訊息") is False
 
-def test_send_fail(monkeypatch):
-    # 失敗回傳 500
-    monkeypatch.setattr(
-        "utils.notifier.telegram_notifier.requests.post",
-        lambda *args, **kwargs: mock_api_response(status_code=500)
-    )
-    notifier = TelegramNotifier(token="TEST_TOKEN", chat_id="TEST_CHAT")
-    assert notifier.send("hello") is False
+def test_send_fail_exception(monkeypatch):
+    """[FAIL] 發送時遇 Exception 應回傳 False"""
+    def fake_post(url, json, timeout):
+        raise Exception("network error")
+    monkeypatch.setattr("utils.notifier.telegram_notifier.requests.post", fake_post)
+    notifier = TelegramNotifier("FAKE_TOKEN", "FAKE_CHAT_ID")
+    assert notifier.send("錯誤訊息") is False
 
-def test_send_raises_request_exception(monkeypatch, capsys):
-    # 模擬網路例外
-    def raise_exc(*args, **kwargs):
-        raise requests.RequestException("network error")
-    monkeypatch.setattr(
-        "utils.notifier.telegram_notifier.requests.post",
-        raise_exc
-    )
-    notifier = TelegramNotifier(token="TEST_TOKEN", chat_id="TEST_CHAT")
-    # send 應捕獲例外並回傳 False，而不是拋出
-    result = notifier.send("hello")
-    assert result is False
-
-    out = capsys.readouterr().out
-    assert "[Notifier] 發送例外" in out
+def test_send_missing_token_or_chat_id():
+    """[EDGE] 缺 token 或 chat_id 應直接回傳 False（不發送）"""
+    notifier = TelegramNotifier("", "123")
+    assert notifier.send("msg") is False
+    notifier = TelegramNotifier("T", "")
+    assert notifier.send("msg") is False
+    notifier = TelegramNotifier("", "")
+    assert notifier.send("msg") is False

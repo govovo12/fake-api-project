@@ -1,35 +1,41 @@
-# utils/env/env_manager.py
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-from workspace.controller import log_controller
-from workspace.config import paths
+from typing import Optional, Callable
 
-_env_loaded = False
+def tool(func):
+    """自製工具標記（供自動掃描工具表用）"""
+    func.is_tool = True
+    return func
 
-
-def load_env(filename: str) -> None:
+class EnvManager:
     """
-    載入指定 .env 檔案（從 config/envs/ 底下），例如 "account_gen.env"
+    [TOOL] 通用 .env 管理工具
+    - 不綁 profile，不綁 log，不綁任何業務，只負責 load/get
+    - 其他一切行為皆由呼叫方決定
     """
-    from config import paths
-    global _env_loaded
+    def __init__(self):
+        pass
 
-    env_path = paths.ENV_PATH / filename
-    if not env_path.exists():
-        log_controller.warn(f"找不到 .env 檔案：{filename}")
-        return
+    @tool
+    def load_env(self, env_path: Path) -> bool:
+        """
+        [TOOL] 載入指定 .env 檔案，成功回傳 True，失敗 False。
+        """
+        if not env_path.exists():
+            return False
+        load_dotenv(dotenv_path=env_path, override=True)
+        return True
 
-    load_dotenv(dotenv_path=env_path, override=True)
-    _env_loaded = True
-    log_controller.info(f"成功載入環境設定檔：{filename}")
+    @tool
+    def get_env(self, key: str, default: str = "") -> str:
+        """
+        [TOOL] 取得環境變數，無則回傳 default。
+        """
+        value = os.getenv(key, default)
+        return value if value is not None else default
 
-
-def get_env(key: str, default: str = "") -> str:
-    """
-    取得環境變數，若不存在則回傳 default。
-    """
-    value = os.getenv(key, default)
-    if not value:
-        log_controller.warn(f"讀取環境變數失敗：{key}，使用預設值")
-    return value
+# 推薦全專案共用 instance
+env = EnvManager()
+load_env = env.load_env
+get_env = env.get_env

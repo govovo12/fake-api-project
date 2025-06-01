@@ -1,86 +1,53 @@
-# 🧪 fake-api-project
+🧪 fake-api-project
+這是個示範用的 API 自動化測試框架，
+包含功能測試、整合測試，還支援 CI/CD 流程和測試通知，
+適合拿來當作品集或實務練習。
 
-專案目標為展示一套符合業界標準的 API 自動化測試框架，涵蓋功能測試與整合測試，並結合 CI/CD、測試報告與通知機制，作為作品集與實務開發基礎。
+📁 專案結構簡介
 
----
-
-## 📁 專案結構說明
-
-```bash
 fake-api-project/
-├── main.py                     # 專案主入口，統一處理 log、通知、錯誤管理
-├── requirements.txt            # 所有依賴套件
-├── bat/                        # 一鍵腳本工具（如切分支、推送、更新套件）
-├── workspace/                  # 專案主要邏輯與測試模組
-│   ├── .github/workflows/      # GitHub Actions 流程檔（自動測試與部署）
-│   ├── config/                 # 全域設定檔（如路徑、金鑰、錯誤碼）
-│   ├── controller/             # 控制器：處理模組流程、錯誤整合
-│   ├── modules/                # 單一模組：執行實際 API 請求邏輯
-│   ├── notifier/               # 通知模組抽象化架構（目前為 telegram）
-│   ├── telegram/               # Telegram 實際發送邏輯（可移入 notifier）
-│   ├── testdata/              # 測資（每模組一資料夾，含 schema）
-│   ├── tests/                 # pytest 測試檔案（每模組對應一支）
-│   ├── utils/                 # log 工具、斷言工具
-│   ├── logs/                  # log 寫入目錄（每日一檔）
-│   ├── reports/               # pytest-html 測試報告輸出
-```
+├── main.py             # 入口，集中管理 log、錯誤、通知
+├── requirements.txt    # Python 套件依賴
+├── bat/                # 常用一鍵腳本（切分支、推送、更新套件等）
+├── workspace/          # 主要程式碼與測試
+│   ├── config/         # 全域設定（路徑、金鑰、錯誤碼）
+│   ├── controller/     # 控制器，串接模組流程與錯誤處理
+│   ├── modules/        # 真正的 API 請求邏輯
+│   ├── notifier/       # 通知系統（目前用 Telegram）
+│   ├── testdata/       # 測試用資料（JSON）
+│   ├── tests/          # pytest 測試檔
+│   ├── utils/          # 工具類模組（log、assert、retry 等）
+│   ├── logs/           # 日誌檔案目錄
+│   └── reports/        # 測試報告
+✅ 設計原則
+每個模組職責分明，互不干擾
 
----
+main.py 是統一入口，負責錯誤、log、通知整合
 
-## ✅ 設計原則
+由 controller 處理流程與錯誤彙整
 
-### 模組分層原則
+真正跟 API 請求相關邏輯寫在 modules
 
-| 層級            | 負責內容                         |
-| ------------- | ---------------------------- |
-| `main.py`     | 統一呼叫 controller，集中 log、錯誤、通知 |
-| `controller/` | 串接模組邏輯、處理流程與錯誤彙整             |
-| `modules/`    | 負責實際 API 請求與資料處理             |
-| `testdata/`   | 儲存測資 JSON（支援多筆、自動讀取）         |
-| `tests/`      | 撰寫 pytest 測試案例（與模組一對一）       |
+測試跟模組一一對應，方便管理
 
-### 補充模組原則
+🔧 輔助工具
+bat/ 裡有常用腳本，像是切換分支、推送、更新套件、顯示專案結構
 
-* `error_codes.py`: 集中管理錯誤碼
-* `logger.py`: 使用 log\_step 裝飾器，集中 log 等級設定（由 global\_config 控制）
-* `notifier/`: 採抽象介面設計，未來可替換為 Slack/Email 等
+測試會產出漂亮的 HTML 報告放在 workspace/reports
 
----
+測試結果會自動通知 Telegram
 
-## 🔧 輔助工具
+🧠 維護策略
+都用 Path(__file__).resolve() 做路徑管理，避免錯誤
 
-### bat/
+模組拆得細，單一職責好維護
 
-* `commit_and_push.bat`: 輸入 commit message 後自動 git 推送
-* `switch_branch.bat`: 一鍵切換分支
-* `print_structure.bat`: 顯示目前專案結構
-* `update_requirements.bat`: 自動合併套件與 requirements.txt（英文無亂碼）
+將來可搭配 JSON schema 驗證測試資料
 
-### 測試與報告
+🚀 如何開始
 
-* 使用 `pytest-html`：產出 HTML 報告存至 `workspace/reports/`
-* 測試報告會上傳 GitHub Pages
-* 測試結果摘要會通知 Telegram（由 main.py 控制）
-
----
-
-## 🧠 維護策略
-
-* 所有檔案皆使用旗標式路徑：`Path(__file__).resolve()` 作為基礎
-* 模組責任明確：每層只處理單一任務
-* 可搭配 `create_module.py`（未啟用）自動產生模組結構
-* 測資資料建議搭配 schema 驗證，使用 `jsonschema` 套件
-
----
-
-## 🚀 開始測試
-
-```bash
-# 安裝依賴
+# 安裝套件
 pip install -r requirements.txt
 
-# 執行測試並產出報告
+# 執行所有測試並產出 HTML 報告
 pytest --html=workspace/reports/report.html --self-contained-html
-```
-
----

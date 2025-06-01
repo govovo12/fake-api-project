@@ -1,50 +1,39 @@
 import requests
 from typing import Any, Dict, Optional
-from controller.retry_controller import run_with_retry
-from controller import log_controller
+
+def tool(func):
+    """自製工具標記（供自動掃描工具表用）"""
+    func.is_tool = True
+    return func
 
 DEFAULT_TIMEOUT = 5  # seconds
 
-
+@tool
 def get(
     url: str,
     headers: Optional[Dict[str, str]] = None,
     params: Optional[Dict[str, Any]] = None,
-    timeout: int = DEFAULT_TIMEOUT
+    timeout: int = DEFAULT_TIMEOUT,
+    **kwargs
 ) -> requests.Response:
     """
-    封裝 GET 請求，內建 retry 與 log 控制。
+    [TOOL] 最純粹 GET 請求，僅組裝並發送，SRP 單一責任原則。
+    - 不負責 log、retry、副作用等行為
+    - 其餘控制請於呼叫端加 decorator 或外部 controller
     """
-    def request():
-        response = requests.get(url, headers=headers, params=params, timeout=timeout)
-        _log_response("GET", url, response)
-        return response
+    return requests.get(url, headers=headers, params=params, timeout=timeout, **kwargs)
 
-    return run_with_retry(request)
-
-
+@tool
 def post(
     url: str,
     headers: Optional[Dict[str, str]] = None,
     json: Optional[Dict[str, Any]] = None,
-    timeout: int = DEFAULT_TIMEOUT
+    timeout: int = DEFAULT_TIMEOUT,
+    **kwargs
 ) -> requests.Response:
     """
-    封裝 POST 請求，內建 retry 與 log 控制。
+    [TOOL] 最純粹 POST 請求，僅組裝並發送，SRP 單一責任原則。
+    - 不負責 log、retry、副作用等行為
+    - 其餘控制請於呼叫端加 decorator 或外部 controller
     """
-    def request():
-        response = requests.post(url, headers=headers, json=json, timeout=timeout)
-        _log_response("POST", url, response)
-        return response
-
-    return run_with_retry(request)
-
-
-def _log_response(method: str, url: str, response: requests.Response):
-    """
-    通用回應紀錄函式。
-    """
-    if response.ok:
-        log_controller.info(f"[{method}] {url} → {response.status_code}")
-    else:
-        log_controller.error(f"[{method}] {url} → {response.status_code}", code="API_FAIL")
+    return requests.post(url, headers=headers, json=json, timeout=timeout, **kwargs)

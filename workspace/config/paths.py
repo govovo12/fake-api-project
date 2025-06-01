@@ -1,62 +1,56 @@
 from pathlib import Path
 
-# === 基準定位：專案根目錄 ===
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+# Fake-API 專案根目錄 (config 同層往上兩層)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-# === 常用子資料夾 ===
+# workspace 根目錄
 WORKSPACE_ROOT = PROJECT_ROOT / "workspace"
+
+# 各主要 utils 模組資料夾
+UTILS_ROOT = WORKSPACE_ROOT / "utils"
+LOGGER_ROOT = UTILS_ROOT / "logger"
+NOTIFIER_ROOT = UTILS_ROOT / "notifier"
+RETRY_ROOT = UTILS_ROOT / "retry"
+REQUEST_ROOT = UTILS_ROOT / "request"
+FILE_ROOT = UTILS_ROOT / "file"
+ENV_ROOT = UTILS_ROOT / "env"
+MOCK_ROOT = UTILS_ROOT / "mock"
+FIXTURE_ROOT = UTILS_ROOT / "fixture"
+TIME_ROOT = UTILS_ROOT / "time"
+STUB_ROOT = UTILS_ROOT / "stub"
+EXPORT_ROOT = UTILS_ROOT / "export"
+CALLBACK_ROOT = UTILS_ROOT / "callback"
+ASSERT_ROOT = UTILS_ROOT / "asserts"
+FAKE_ROOT = UTILS_ROOT / "fake"
+DATA_ROOT = UTILS_ROOT / "data"
+
+# 任務模組資料夾（如自動打卡）
+TASKS_ROOT = WORKSPACE_ROOT / "task"
+
+# 測試資料夾
 TESTS_ROOT = WORKSPACE_ROOT / "tests"
-TESTDATA_PATH = WORKSPACE_ROOT / "testdata"
-REPORT_PATH = WORKSPACE_ROOT / "reports"
-CONFIG_PATH = WORKSPACE_ROOT / "config"
+UNIT_TESTS_ROOT = TESTS_ROOT / "unit"
+INTEGRATION_TESTS_ROOT = TESTS_ROOT / "integration"
 
-# === utils 子模組 ===
-UTILS_PATH = WORKSPACE_ROOT / "utils"
-ASSERT_UTILS_PATH = UTILS_PATH / "asserts"
-CALLBACK_UTILS_PATH = UTILS_PATH / "callback"
-DATA_UTILS_PATH = UTILS_PATH / "data"
-ENV_UTILS_PATH = UTILS_PATH / "env"
-ERROR_UTILS_PATH = UTILS_PATH / "error"
-EXPORT_UTILS_PATH = UTILS_PATH / "export"
-FAKE_UTILS_PATH = UTILS_PATH / "fake"
-FILE_UTILS_PATH = UTILS_PATH / "file"
-LOGGER_UTILS_PATH = UTILS_PATH / "logger"
-NOTIFIER_UTILS_PATH = UTILS_PATH / "notifier"
-PRINT_UTILS_PATH = UTILS_PATH / "print"
-REPORT_UTILS_PATH = UTILS_PATH / "report"
-REQUEST_UTILS_PATH = UTILS_PATH / "request"
-RETRY_UTILS_PATH = UTILS_PATH / "retry"
-STUB_UTILS_PATH = UTILS_PATH / "stub"
-TIME_UTILS_PATH = UTILS_PATH / "time"
+# 日誌與暫存資料夾
+LOGS_ROOT = PROJECT_ROOT / "logs"
+TMP_ROOT = PROJECT_ROOT / "tmp"
 
-# === utils 單檔工具 ===
-JSON_HELPER_PATH = UTILS_PATH / "json_helper.py"
-RANDOM_FACTORY_PATH = UTILS_PATH / "random_factory.py"
-RUN_LAUNCHER_PATH = UTILS_PATH / "run_launcher.py"
+# log 檔案路徑，conftest.py 會 patch 它
+LOG_PATH = WORKSPACE_ROOT / "reports" / "run_log.txt"
 
+# 取得指定模組的工具檔案路徑（例如 utils/logger）
+def get_module_path(mod_name: str) -> Path:
+    return UTILS_ROOT / mod_name
 
-# === 測試子模組 ===
-UNIT_TESTS_PATH = TESTS_ROOT / "unit"
-TIME_UNIT_TEST_PATH = UNIT_TESTS_PATH / "time"
+# 取得指定任務模組路徑（例如 task_login.py）
+def get_task_module_path(task_name: str) -> Path:
+    return TASKS_ROOT / f"{task_name}.py"
 
-# === 常用函式 ===
-def get_account_json_path(filename: str) -> Path:
-    return TESTDATA_PATH / "account" / filename
+# 取得單元測試資料夾下模組路徑（方便統一管理）
+def get_unit_test_path(module: str) -> Path:
+    return UNIT_TESTS_ROOT / module
 
-def get_stub_json_path(filename: str) -> Path:
-    return TESTDATA_PATH / "stub" / filename
-
-# === 預設帳號資料檔案 ===
-DEFAULT_ACCOUNT_FILENAME = "valid_case.json"
-
-def get_default_account_json_path() -> Path:
-    return get_account_json_path(DEFAULT_ACCOUNT_FILENAME)
-
-# === 常用檔案 ===
-ACCOUNT_REPORT_PATH = REPORT_PATH / "account_generator_report.html"
-LOG_PATH = REPORT_PATH / "run_log.txt"
-
-# === .env 設定檔 ===
-ENV_PATH = CONFIG_PATH / "envs"
-ACCOUNT_ENV_PATH = ENV_PATH / "account_gen.env"
-LOGIN_ENV_PATH = ENV_PATH / "login.env"
+# 取得整合測試資料夾下模組路徑
+def get_integration_test_path(module: str) -> Path:
+    return INTEGRATION_TESTS_ROOT / module
