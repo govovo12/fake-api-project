@@ -1,11 +1,25 @@
 @echo off
-REM 切換到專案根目錄
-cd /d %~dp0..
 
-REM 啟動虛擬環境
-call venv\Scripts\activate.bat
+REM Move to the directory of this .bat file
+cd /d %~dp0
+cd ..
 
-REM 執行 pytest
-pytest
+REM Show current directory (for debugging)
+echo Current working directory:
+cd
 
+REM Check if virtual environment exists
+if not exist ".venv\Scripts\activate.bat" (
+    echo [ERROR] Virtual environment not found in .venv\
+    pause
+    exit /b
+)
+
+REM Activate the virtual environment
+call .venv\Scripts\activate.bat
+
+REM Run pytest
+call .venv\Scripts\python.exe -m pytest workspace/tests
+
+REM Pause the terminal window
 pause

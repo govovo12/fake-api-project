@@ -122,9 +122,9 @@
 
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
-| mock | mock_api_response | 產生模擬 API response 物件 [TOOL] | ✅ |
-| mock | mock_function | 產生模擬任意函數的 MagicMock [TOOL] | ✅ |
-| mock | mock_logger | 產生模擬 logger 物件 [TOOL] | ✅ |
+| mock | mock_api_response | 產生模擬 API response 物件 | ✅ |
+| mock | mock_function | 產生模擬任意函數 | ✅ |
+| mock | mock_logger | 產生模擬 logger 物件 | ✅ |
 
 ---
 
@@ -155,6 +155,17 @@
 |---|---|---|---|
 | request | get | [TOOL] 最純粹 GET 請求，僅組裝並發送，SRP 單一責任原則。 | ✅ |
 | request | post | [TOOL] 最純粹 POST 請求，僅組裝並發送，SRP 單一責任原則。 | ✅ |
+
+---
+
+## response
+
+| 模組 | 名稱 | 說明 | @tool |
+|---|---|---|---|
+| response | extract_token | 從回應中提取 token 欄位 | ✅ |
+| response | get_data_field | 從 data 欄位中提取指定欄位值 | ✅ |
+| response | get_error_message | 從回應中提取錯誤訊息（優先使用 msg，其次 error） | ✅ |
+| response | is_success | 判斷是否為成功回應（code = 200 且含有 data 欄位） | ✅ |
 
 ---
 

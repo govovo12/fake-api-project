@@ -14,7 +14,10 @@ from utils.fixture.fixture_request import fake_session
 from utils.fixture.fixture_stub import stub_cart_payload
 from utils.fixture.fixture_assert import fake_status_code
 
+# 匯入 mock 工廠
+from utils.mock.mock_helper import get_mock
 
+# 修正 sys.path（保留原本邏輯）
 ROOT = Path(__file__).resolve().parents[0]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -33,3 +36,10 @@ def always_patch_log_path(request, monkeypatch, tmp_path):
 
     fake_log_path = tmp_path / "run_log.txt"
     monkeypatch.setattr(paths, "LOG_PATH", fake_log_path)
+
+# ✅ mock_factory：統一提供動態 mock 工具的 fixture
+@pytest.fixture
+def mock_factory():
+    def _factory(name: str, *args, **kwargs):
+        return get_mock(name, *args, **kwargs)
+    return _factory
