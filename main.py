@@ -2,17 +2,19 @@ import argparse
 import sys
 from pathlib import Path
 
-# 引入你自己的 paths.py 統一路徑控管
-from workspace.config.paths import WORKSPACE_ROOT
+# 引入你的 paths.py 裡的 PROJECT_ROOT
+from workspace.config.paths import PROJECT_ROOT
 
 def main():
     parser = argparse.ArgumentParser(description="Fake-API 任務入口")
+    parser.add_argument("--folder", type=str, required=True, help="請指定任務資料夾名稱（如 controller、tasks）")
     parser.add_argument("--task", type=str, required=True, help="請指定要執行的任務模組名稱（不含 .py）")
     args = parser.parse_args()
+    folder = args.folder
     task_name = args.task
 
-    # 任務檔案預設放在 workspace/tasks/ 下（可依 paths.py 結構調整）
-    task_module_path = WORKSPACE_ROOT / "tasks" / f"{task_name}.py"
+    # 路徑正確指到 workspace/底下對應資料夾
+    task_module_path = PROJECT_ROOT / "workspace" / folder / f"{task_name}.py"
 
     if not task_module_path.exists():
         print(f"找不到任務模組：{task_module_path}")

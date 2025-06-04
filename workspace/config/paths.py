@@ -1,7 +1,7 @@
 from pathlib import Path
 
 # Fake-API 專案根目錄 (config 同層往上兩層)
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 # workspace 根目錄
 WORKSPACE_ROOT = PROJECT_ROOT / "workspace"
@@ -23,9 +23,42 @@ CALLBACK_ROOT = UTILS_ROOT / "callback"
 ASSERT_ROOT = UTILS_ROOT / "asserts"
 FAKE_ROOT = UTILS_ROOT / "fake"
 DATA_ROOT = UTILS_ROOT / "data"
+UUID_ROOT = UTILS_ROOT / "uuid"
+UUID_GENERATOR_PATH = UUID_ROOT / "uuid_generator.py"
 
-# 任務模組資料夾（如自動打卡）
-TASKS_ROOT = WORKSPACE_ROOT / "task"
+# 任務模組資料夾
+TASKS_ROOT = WORKSPACE_ROOT / "modules" / "tasks"  # 建議存放控制器、任務模組
+
+
+
+# 測試資料（testdata）資料夾
+TESTDATA_ROOT = WORKSPACE_ROOT / "testdata"
+USER_TESTDATA_ROOT = TESTDATA_ROOT / "user"
+PRODUCT_TESTDATA_ROOT = TESTDATA_ROOT / "product"
+ORDER_TESTDATA_ROOT = TESTDATA_ROOT / "order"        # 可預留
+CART_TESTDATA_ROOT = TESTDATA_ROOT / "cart"          # 可預留
+
+def get_user_testdata_path(filename: str) -> Path:
+    return USER_TESTDATA_ROOT / filename
+
+def get_product_testdata_path(filename: str) -> Path:
+    return PRODUCT_TESTDATA_ROOT / filename
+
+def get_order_testdata_path(filename: str) -> Path:
+    return ORDER_TESTDATA_ROOT / filename
+
+def get_cart_testdata_path(filename: str) -> Path:
+    return CART_TESTDATA_ROOT / filename
+
+# config 路徑
+CONFIG_ROOT = WORKSPACE_ROOT / "config"
+ENVS_CONFIG_ROOT = CONFIG_ROOT / "envs"
+FAKE_PRODUCT_CONFIG_PATH = ENVS_CONFIG_ROOT / "fake_product_config.py"
+FAKE_USER_CONFIG_PATH = ENVS_CONFIG_ROOT / "fake_user_config.py"  # 未來有 user config 可預留
+
+def get_env_config_path(filename: str) -> Path:
+    """取得 envs 目錄下的設定檔完整路徑"""
+    return ENVS_CONFIG_ROOT / filename
 
 # 測試資料夾
 TESTS_ROOT = WORKSPACE_ROOT / "tests"
@@ -54,3 +87,4 @@ def get_unit_test_path(module: str) -> Path:
 # 取得整合測試資料夾下模組路徑
 def get_integration_test_path(module: str) -> Path:
     return INTEGRATION_TESTS_ROOT / module
+

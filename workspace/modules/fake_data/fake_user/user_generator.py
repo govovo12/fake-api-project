@@ -1,29 +1,29 @@
 # fake_user/user_generator.py
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 from faker import Faker
 import uuid
 
+from workspace.config.rules import error_codes
+
 fake = Faker()
 
-def generate_fake_user_data() -> Dict[str, Any]:
+def generate_fake_user_data() -> Tuple[int, Dict[str, Any]]:
     """
     產生符合 Fake Store API 註冊格式的假用戶資料。
-    重點強化 email 與 password 的隨機性，避免重複。
+    回傳 (錯誤碼, 資料)，若成功錯誤碼為 0，否則對應錯誤碼。
     """
+    try:
+        name = fake.name()
+        unique_id = uuid.uuid4().hex[:8]
+        email = f"user_{unique_id}@mail.com"
+        password = fake.password(length=12, special_chars=True, digits=True, upper_case=True)
 
-    # ✅ 使用 faker 隨機產生名字
-    name = fake.name()
+        return 0, {
+            "name": name,
+            "email": email,
+            "password": password,
+            "passwordConfirm": password
+        }
 
-    # ✅ 使用 uuid 加強 email 唯一性（例如：user_a7c8b2d1@mail.com）
-    unique_id = uuid.uuid4().hex[:8]
-    email = f"user_{unique_id}@mail.com"
-
-    # ✅ 高強度隨機密碼，長度 12 位、包含特殊字元、大寫與數字
-    password = fake.password(length=12, special_chars=True, digits=True, upper_case=True)
-
-    return {
-        "name": name,
-        "email": email,
-        "password": password,
-        "passwordConfirm": password
-    }
+    except Exception:
+        return error_codes.ACCOUNT_GEN_FAIL, {}

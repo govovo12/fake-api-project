@@ -23,6 +23,7 @@
 
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
+| data | enrich_with_uuid | [TOOL] 將 dict 加工，附上 uuid 欄位，回傳新 dict（不修改原資料） | ✅ |
 | data | load_json | [TOOL] 嘗試讀取 JSON 檔案並回傳 dict。 | ✅ |
 | data | load_jsons | [TOOL] 批次讀取資料夾下所有 json 檔，回傳 {檔名: dict} | ✅ |
 | data | save_json | [TOOL] 將 dict 儲存成 JSON 檔案，成功回傳 True，失敗回傳 False。 | ✅ |
@@ -200,6 +201,14 @@
 | time | iso_to_timestamp | 將 ISO 格式字串轉換為 timestamp（float秒） [TOOL] | ✅ |
 | time | timestamp_to_iso | 將 timestamp 轉換為指定時區的 ISO 格式字串 [TOOL] | ✅ |
 | time | wait_seconds | 讓程式等待指定秒數 [TOOL] | ✅ |
+
+---
+
+## uuid
+
+| 模組 | 名稱 | 說明 | @tool |
+|---|---|---|---|
+| uuid | generate_batch_uuid | 產生一組全域唯一的 UUID（32 字元十六進位字串） [TOOL] | ✅ |
 
 ---
 
