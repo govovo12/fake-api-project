@@ -1,64 +1,61 @@
-import json
+# workspace/utils/data/data_loader.py
+
 from pathlib import Path
-from typing import Callable, Optional, Dict, Any, List, Union
+import json
+from workspace.utils.print.printer import print_error
+from workspace.utils.file import file_helper
+from workspace.config import paths
+from workspace.config.rules import error_codes
+from workspace.config.rules.error_codes import ResultCode
 
 def tool(func):
-    """自製工具標記（供自動掃描工具表用）"""
     func.is_tool = True
     return func
 
 @tool
-def load_json(
-    path: Path,
-    encoding: str = "utf-8",
-    on_error: Optional[Callable[[Exception, Path], None]] = None
-) -> Dict[str, Any]:
-    """
-    [TOOL] 嘗試讀取 JSON 檔案並回傳 dict。
-    - path: JSON 檔案路徑
-    - encoding: 檔案編碼，預設 utf-8
-    - on_error: 例外處理 callback，可自訂 log 行為。型態 (Exception, Path) -> None
-
-    失敗時會回傳空 dict，並可選擇執行 on_error。
-    """
+def load_json(path_or_str: str | Path):
+    """通用 JSON 讀取器，回傳 (code, data)"""
     try:
-        with open(path, encoding=encoding) as f:
-            return json.load(f)
+        data = file_helper.load_json(path_or_str)
+        return 0, data
     except Exception as e:
-        if on_error:
-            on_error(e, path)
-        return {}
+        print_error(f"❌ JSON 讀取失敗：{e}")
+        return error_codes.ResultCode.USER_TESTDATA_NOT_FOUND, None
 
 @tool
-def save_json(
-    data: Dict[str, Any],
-    path: Path,
-    encoding: str = "utf-8",
-    indent: int = 2,
-    on_error: Optional[Callable[[Exception, Path], None]] = None
-) -> bool:
-    """
-    [TOOL] 將 dict 儲存成 JSON 檔案，成功回傳 True，失敗回傳 False。
-    """
+def save_json(data: dict, path_or_str: str | Path):
+    """通用 JSON 寫入器"""
     try:
-        with open(path, "w", encoding=encoding) as f:
-            json.dump(data, f, ensure_ascii=False, indent=indent)
-        return True
+        file_helper.save_json(data, path_or_str)
+        return 0
     except Exception as e:
-        if on_error:
-            on_error(e, path)
-        return False
+        print_error(f"❌ JSON 寫入失敗：{e}")
+        return error_codes.ResultCode.USER_WRITE_FAIL
 
 @tool
-def load_jsons(
-    folder: Path,
-    encoding: str = "utf-8",
-    on_error: Optional[Callable[[Exception, Path], None]] = None
-) -> Dict[str, Dict[str, Any]]:
-    """
-    [TOOL] 批次讀取資料夾下所有 json 檔，回傳 {檔名: dict}
-    """
-    result = {}
-    for f in folder.glob("*.json"):
-        result[f.name] = load_json(f, encoding=encoding, on_error=on_error)
-    return result
+def load_user_testdata(uuid: str):
+    """根據 UUID 讀取 user 測資檔案"""
+    user_path = paths.get_user_testdata_path(f"{uuid}_user.json")
+    return load_json(user_path)
+
+@tool
+def load_product_testdata(uuid: str):
+    """根據 UUID 讀取 product 測資檔案"""
+    product_path = paths.get_product_testdata_path(f"{uuid}_product.json")
+    return load_json(product_path)
+
+def save_json(data: dict, path_or_str: str | Path) -> None:
+    """寫入 JSON 檔（由 file_helper 實作）"""
+    try:
+        file_helper.save_json(data, path_or_str)
+    except Exception as e:
+        raise RuntimeError(f"❌ JSON 寫入失敗：{e}")
+
+def load_json(path_or_str: str | Path) -> tuple[int, dict]:
+    """讀取 JSON 檔，錯誤時回傳錯誤碼與空 dict"""
+    try:
+        data = file_helper.load_json(path_or_str)
+        return ResultCode.SUCCESS, data
+    except Exception as e:
+        print(f"❌ JSON 讀取失敗：{e}")
+        return ResultCode.USER_TESTDATA_NOT_FOUND, {}

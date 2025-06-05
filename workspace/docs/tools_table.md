@@ -149,6 +149,7 @@
 | print | apply_color | 將字串以指定 ANSI 色碼包裝後回傳 [TOOL] | ✅ |
 | print | print_error | 彩色 error log 輸出，含時間 [TOOL] | ✅ |
 | print | print_info | 彩色 info log 輸出，含時間 [TOOL] | ✅ |
+| print | print_success | 彩色 success log 輸出，含時間 [TOOL] | ✅ |
 | print | print_warn | 彩色 warn log 輸出，含時間 [TOOL] | ✅ |
 
 ---
@@ -157,9 +158,10 @@
 
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
-| request | get | [TOOL] 最純粹 GET 請求，僅組裝並發送，SRP 單一責任原則。 | ✅ |
-| request | post | [TOOL] 最純粹 POST 請求，僅組裝並發送，SRP 單一責任原則。 | ✅ |
-| request | post_json | [TOOL] 發送 POST 請求並嘗試解析 JSON 結果 | ✅ |
+| request | get | 發送 GET 請求（純粹工具，不做錯誤處理與 log） | ✅ |
+| request | parse_json_safe | 安全解析 JSON：成功回傳 (True, dict)，失敗回傳 (False, None) | ✅ |
+| request | post | 發送 POST 請求（純粹工具，不做錯誤處理與 log） | ✅ |
+| request | post_and_parse_json | 發送 POST 並解析 JSON（不判斷成功與否、不印 log、不處理錯誤碼） | ✅ |
 
 ---
 
@@ -167,14 +169,15 @@
 
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
-| response | extract_token_from_dict | 從 dict response 中提取 token 欄位 | ✅ |
-| response | get_data_field_from_dict | 從 dict response 的 data 欄位中提取指定欄位值 | ✅ |
-| response | get_data_field_from_response | 從 requests.Response 的 JSON → data 區段中提取欄位 | ✅ |
-| response | get_error_message_from_dict | 從 dict response 中提取錯誤訊息（優先 msg，其次 error） | ✅ |
-| response | get_json_field_from_response | 從 requests.Response 物件的 JSON 中擷取指定欄位，失敗回傳 None | ✅ |
-| response | is_register_success_dict | 判斷註冊是否成功（dict response 中有 id） | ✅ |
-| response | is_status_code_success | 判斷 requests.Response 狀態碼是否為 200 | ✅ |
-| response | is_success_dict | 判斷是否為成功回應（code = 200 且含有 data 欄位） | ✅ |
+| response | get_code_from_dict | 取得 code 欄位（若不存在則回傳 None） | ✅ |
+| response | get_data_field_from_dict | 從 data 區塊中提取指定欄位值 | ✅ |
+| response | get_data_field_from_response | 從 JSON 的 data 區塊中擷取指定欄位 | ✅ |
+| response | get_error_message_from_dict | 優先從 msg，其次 error 擷取錯誤訊息 | ✅ |
+| response | get_error_message_from_response | 擷取 msg 或 error 為錯誤訊息 | ✅ |
+| response | get_json_field_from_response | 從 JSON 中擷取指定欄位值 | ✅ |
+| response | get_status_code_from_response | 取得 HTTP status code | ✅ |
+| response | get_token_from_dict | 從 data 區塊中提取 token | ✅ |
+| response | get_token_from_response | 擷取 JSON 的 data.token 欄位 | ✅ |
 
 ---
 
@@ -217,6 +220,8 @@
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
 | uuid | generate_batch_uuid_with_code | 產生一組全域唯一的 UUID，標準回傳（error_code, uuid） | ✅ |
+| uuid | get_uuid_for_task | 取得對應任務的 UUID，如果沒設定則回傳 None | ✅ |
+| uuid | save_uuid_for_task | 儲存某任務對應的測資 UUID | ✅ |
 
 ---
 

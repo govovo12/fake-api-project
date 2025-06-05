@@ -25,3 +25,10 @@ def enrich_with_uuid(data: Dict, uuid: str) -> Dict:
     new_data = data.copy()
     new_data["uuid"] = uuid
     return new_data
+@tool
+def enrich_payload(data: dict, fields_str: str) -> dict:
+    """
+    根據 .env 的欄位設定（逗號分隔）從資料中取值並組裝 payload。
+    """
+    keys = [key.strip() for key in fields_str.split(",") if key.strip()]
+    return {key: data.get(key) for key in keys}

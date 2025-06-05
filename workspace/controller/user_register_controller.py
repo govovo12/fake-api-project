@@ -1,59 +1,78 @@
-from workspace.utils.response.response_helper import (
-    is_status_code_success,
-    extract_token_dict,
-    is_register_success_dict,
-    get_error_message_dict
-)
-from workspace.utils.request.request_handler import post_json
-from workspace.utils.file.file_helper import read_json
+"""
+使用者註冊控制器：讀取帳號測資 → 組裝 payload → 發送註冊 API
+"""
+
+from __future__ import annotations
+from pathlib import Path
+import json
+
+from workspace.config import paths
+from workspace.config.rules import error_codes
+from workspace.utils.env.env_manager import load_env, get_env
+from workspace.utils.logger.log_helper import log_step
+from workspace.utils.print.printer import print_info, print_error
+from workspace.utils.data.data_loader import load_user_testdata
 from workspace.modules.register.build_register_payload import build_register_payload
-from workspace.utils.logger.log_helper import print_info as log_info
-from workspace.utils.logger.log_helper import print_error as log_error
-from workspace.config.paths import get_user_testdata_path
-from workspace.utils.error.error_handler import handle_exception
-from workspace.utils.print.printer import print_info, print_error, print_success
+from workspace.utils.data.data_enricher import enrich_with_uuid
+from workspace.utils.request.request_handler import post
+from workspace.utils.response.response_helper import get_data_field_from_dict
 
 __task_info__ = {
-    "name": "user_register_controller",
-    "desc": "註冊帳號（使用測資）",
-    "version": "v1.0",
-    "entry": lambda: run_user_register("023e4f2fb7ba46279caf9687d1e1c36b_user.json"),
+    "task": "user_register",
+    "desc": "讀取帳號測資並註冊帳號",
+    "version": "1.0.1",
+    "input": "uuid（需先產生資料）",
+    "output": "註冊結果與 log",
 }
 
-def run_user_register(filename: str):
-    try:
-        print_info("檢查測資")
-        data = read_json(get_user_testdata_path(filename))
-        log_info("【檢查測資】成功", code=0)
-    except Exception as e:
-        err = handle_exception(e)
-        print_error(f"❌ 測資讀取失敗：{err.get('msg')}")
+
+def run(user_uuid: str = None):
+    ResultCode = error_codes.ResultCode
+
+    # Step 0: 載入 API 設定檔
+    if not load_env(paths.API_ENV_PATH):
+        log_step("讀取 API 設定", ResultCode.USER_TESTDATA_NOT_FOUND)
         return
 
+    # Step 1: 抓取設定變數
+    REGISTER_URL = get_env("REGISTER_URL")
+    REGISTER_HEADER_STR = get_env("REGISTER_HEADER", "{}")
     try:
-        code, payload = build_register_payload(data)
-        if code != 0:
-            log_error("【組裝註冊 payload】失敗", code=code)
-            print_error(f"❌ 組裝註冊資料失敗（code={code}）")
-            return
-        log_info("【組裝註冊 payload】成功", code=0)
-    except Exception as e:
-        err = handle_exception(e)
-        print_error(f"❌ 組裝流程錯誤：{err.get('msg')}")
+        REGISTER_HEADER = json.loads(REGISTER_HEADER_STR)
+    except Exception:
+        print_error("❌ REGISTER_HEADER 格式錯誤")
         return
 
-    try:
-        res = post_json("https://fakestoreapi.com/users", payload)
-        if not is_status_code_success(res.status_code):
-            print_error(f"❌ 狀態碼錯誤：{res.status_code}")
-            return
+    # Step 2: 檢查 UUID 存在
+    if not user_uuid:
+        print_error("❌ 未提供 UUID，請確認是否有先執行資料產生任務")
+        return
+    print_info(f"📄 UUID = {user_uuid}")
 
-        res_json = res.json()
-        if is_register_success_dict(res_json):
-            print_success(f"✅ 註冊成功，帳號 ID：{res_json.get('id')}")
+    # Step 3: 讀取帳號測資
+    code_data, user_data = load_user_testdata(user_uuid)
+    log_step("讀取測資", code_data)
+    if code_data != ResultCode.SUCCESS or not user_data:
+        return
+
+    # Step 4: 組裝 payload
+    code_payload, payload = build_register_payload(user_data)
+    log_step("組裝註冊 payload", code_payload)
+    if code_payload != ResultCode.SUCCESS or not payload:
+        return
+
+    # Step 5: 加上 UUID
+    enriched_payload = enrich_with_uuid(payload, user_uuid)
+    print_info("✅ 已補完 payload 欄位")
+
+    # Step 6: 發送 API
+    try:
+        response = post(REGISTER_URL, enriched_payload, headers=REGISTER_HEADER)
+        register_id = get_data_field_from_dict(response.json(), "id")
+
+        if register_id:
+            log_step("註冊 API", ResultCode.SUCCESS)
         else:
-            msg = get_error_message_dict(res_json)
-            print_error(f"❌ 註冊失敗：{msg}")
-    except Exception as e:
-        err = handle_exception(e)
-        print_error(f"❌ 發送註冊流程失敗（code={err.get('code', -1)}）：{err.get('msg')}")
+            log_step("註冊 API", ResultCode.REGISTER_API_FAIL)
+    except Exception:
+        log_step("註冊 API", ResultCode.REGISTER_API_FAIL)

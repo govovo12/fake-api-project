@@ -1,8 +1,8 @@
 import requests
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 def tool(func):
-    """自製工具標記（供自動掃描工具表用）"""
+    """自製工具標記（供工具掃描）"""
     func.is_tool = True
     return func
 
@@ -17,9 +17,7 @@ def get(
     **kwargs
 ) -> requests.Response:
     """
-    [TOOL] 最純粹 GET 請求，僅組裝並發送，SRP 單一責任原則。
-    - 不負責 log、retry、副作用等行為
-    - 其餘控制請於呼叫端加 decorator 或外部 controller
+    發送 GET 請求（純粹工具，不做錯誤處理與 log）
     """
     return requests.get(url, headers=headers, params=params, timeout=timeout, **kwargs)
 
@@ -32,29 +30,34 @@ def post(
     **kwargs
 ) -> requests.Response:
     """
-    [TOOL] 最純粹 POST 請求，僅組裝並發送，SRP 單一責任原則。
-    - 不負責 log、retry、副作用等行為
-    - 其餘控制請於呼叫端加 decorator 或外部 controller
+    發送 POST 請求（純粹工具，不做錯誤處理與 log）
     """
     return requests.post(url, headers=headers, json=json, timeout=timeout, **kwargs)
+
 @tool
-def post_json(
+def parse_json_safe(response: requests.Response) -> Tuple[bool, Optional[Dict[str, Any]]]:
+    """
+    安全解析 JSON：成功回傳 (True, dict)，失敗回傳 (False, None)
+    - 控制器可據此判斷是否進一步處理錯誤碼
+    """
+    try:
+        return True, response.json()
+    except Exception:
+        return False, None
+
+@tool
+def post_and_parse_json(
     url: str,
     payload: Dict[str, Any],
     headers: Optional[Dict[str, str]] = None,
     timeout: int = DEFAULT_TIMEOUT,
     **kwargs
-) -> tuple:
+) -> Tuple[int, Optional[Dict[str, Any]]]:
     """
-    [TOOL] 發送 POST 請求並嘗試解析 JSON 結果
-    - 回傳 (code, dict)：成功回傳 200，其餘回傳錯誤碼與訊息
-    - 若 API 無回應或格式錯誤，會有 fallback 保護
+    發送 POST 並解析 JSON（不判斷成功與否、不印 log、不處理錯誤碼）
+    - 回傳 (status_code, json 或 None)
+    - 真正判斷邏輯由 controller 處理
     """
-    try:
-        response = post(url, headers=headers, json=payload, timeout=timeout, **kwargs)
-        if response.status_code == 200:
-            return 200, response.json()
-        else:
-            return response.status_code, {"msg": f"API 回應非 200：{response.status_code}"}
-    except Exception as e:
-        return 500, {"msg": f"POST 請求失敗：{str(e)}"}
+    response = post(url, headers=headers, json=payload, timeout=timeout, **kwargs)
+    success, json_data = parse_json_safe(response)
+    return response.status_code, json_data if success else None

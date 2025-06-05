@@ -74,3 +74,22 @@ def read_json(path: Path, encoding: str = "utf-8") -> Optional[dict]:
             return json.load(f)
     except Exception:
         return None
+@tool
+def save_json(data: dict, path: Path, indent: int = 2, encoding: str = "utf-8") -> bool:
+    """[TOOL] 儲存 JSON 至指定路徑。成功回傳 True，失敗 False。"""
+    try:
+        import json
+        with path.open("w", encoding=encoding) as f:
+            json.dump(data, f, ensure_ascii=False, indent=indent)
+        return True
+    except Exception:
+        return False
+@tool
+def load_json(path: Path, encoding: str = "utf-8") -> Optional[dict]:
+    """[TOOL] 載入 JSON 檔案內容，失敗回傳 None。"""
+    try:
+        import json
+        with path.open("r", encoding=encoding) as f:
+            return json.load(f)
+    except Exception:
+        return None

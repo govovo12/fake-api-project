@@ -1,12 +1,11 @@
-# ====== module import for all要mock的函數 =======
 from workspace.utils.file import file_helper
 from workspace.utils.data import data_loader, data_enricher
-from workspace.utils.uuid import uuid_generator
 from workspace.modules.fake_data.fake_user import user_generator
 from workspace.modules.fake_data.fake_product import product_generator
 from workspace.config import paths
 from workspace.utils.logger import log_helper
 from workspace.config.rules import error_codes
+from workspace.utils.uuid import uuid_generator  
 
 __task_info__ = {
     "task": "testdata_generation",
@@ -17,6 +16,7 @@ __task_info__ = {
     "output": "user.json, product.json 各一筆，檔名以 uuid 區分",
     "entry": None
 }
+
 
 def generate_and_save_testdata():
     ResultCode = error_codes.ResultCode
@@ -83,5 +83,6 @@ def generate_and_save_testdata():
         "user_file": str(paths.get_user_testdata_path(user_filename)),
         "product_file": str(paths.get_product_testdata_path(product_filename)),
     }
+
 
 __task_info__["entry"] = generate_and_save_testdata
