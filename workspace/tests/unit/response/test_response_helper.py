@@ -1,64 +1,72 @@
 import pytest
-from utils.response.response_helper import (
-    is_success,
-    extract_token,
-    get_error_message,
-    get_data_field,
+import requests
+from unittest.mock import MagicMock
+from workspace.utils.response.response_helper import (
+    is_register_success_dict,
+    get_json_field_from_response,
+    extract_token_from_dict,
+    get_error_message_from_dict,
 )
+
 
 pytestmark = [pytest.mark.unit, pytest.mark.response]
 
+# 測試判斷回應是否成功
+def test_is_success_dict_true():
+    resp = {"code": 200, "data": {"token": "abc"}}
+    assert is_success_dict(resp) is True
 
-class TestResponseHelper:
+def test_is_success_dict_false():
+    resp = {"code": 400, "msg": "error"}
+    assert is_success_dict(resp) is False
 
-    def test_is_success_true(self):
-        assert is_success({"code": 200, "data": {"key": "value"}})
-        # ✅ 測試正常成功回應（code=200 且有 data）
+# 測試從回應中擷取 token
+def test_extract_token_from_dict():
+    resp = {"data": {"token": "xyz"}}
+    assert extract_token_from_dict(resp) == "xyz"
 
-    def test_is_success_false_missing_data(self):
-        assert not is_success({"code": 200})
-        # ❌ code=200 但沒有 data，不應視為成功
+def test_extract_token_from_dict_missing():
+    resp = {"data": {}}
+    assert extract_token_from_dict(resp) == ""
 
-    def test_is_success_false_wrong_code(self):
-        assert not is_success({"code": 400, "data": {}})
-        # ❌ code 錯誤（非 200），不應視為成功
+# 測試擷取錯誤訊息
+def test_get_error_message_from_dict_msg():
+    resp = {"msg": "錯誤訊息"}
+    assert get_error_message_from_dict(resp) == "錯誤訊息"
 
-    def test_is_success_empty_response(self):
-        assert not is_success({})
-        # ❌ 完全空的回應，必為失敗
+def test_get_error_message_from_dict_error():
+    resp = {"error": "失敗原因"}
+    assert get_error_message_from_dict(resp) == "失敗原因"
 
-    def test_extract_token_exists(self):
-        assert extract_token({"data": {"token": "abc123"}}) == "abc123"
-        # ✅ 正常從 data 中取出 token
+def test_get_error_message_from_dict_fallback():
+    resp = {}
+    assert get_error_message_from_dict(resp) == "未知錯誤"
 
-    def test_extract_token_missing_token(self):
-        assert extract_token({"data": {}}) == ""
-        # ❌ data 有但沒有 token，應回傳空字串
+# 測試擷取 data 欄位的指定欄位
+def test_get_data_field_from_dict_found():
+    resp = {"data": {"uid": 123}}
+    assert get_data_field_from_dict(resp, "uid") == 123
 
-    def test_extract_token_missing_data(self):
-        assert extract_token({}) == ""
-        # ❌ 沒有 data 欄位，應回傳空字串
+def test_get_data_field_from_dict_not_found():
+    resp = {"data": {}}
+    assert get_data_field_from_dict(resp, "uid") is None
 
-    def test_get_error_message_msg(self):
-        assert get_error_message({"msg": "發生錯誤"}) == "發生錯誤"
-        # ✅ 有 msg 欄位，應正確回傳 msg
+# 測試註冊是否成功
+def test_is_register_success_dict_true():
+    resp = {"id": 1}
+    assert is_register_success_dict(resp) is True
 
-    def test_get_error_message_error(self):
-        assert get_error_message({"error": "錯誤發生"}) == "錯誤發生"
-        # ✅ 沒有 msg 但有 error，也應正確回傳 error
+def test_is_register_success_dict_false():
+    resp = {"msg": "fail"}
+    assert is_register_success_dict(resp) is False
 
-    def test_get_error_message_fallback(self):
-        assert get_error_message({}) == "未知錯誤"
-        # ❌ 兩個欄位都沒有，應回傳預設錯誤訊息
+# 測試從 requests.Response 擷取 json 欄位
+def test_get_json_field_from_response_success():
+    mock_resp = MagicMock(spec=requests.Response)
+    mock_resp.json.return_value = {"token": "abc"}
+    assert get_json_field_from_response(mock_resp, "token") == "abc"
 
-    def test_get_data_field_exists(self):
-        assert get_data_field({"data": {"user": "tony"}}, "user") == "tony"
-        # ✅ data 中有指定欄位，應正確取得值
-
-    def test_get_data_field_missing_key(self):
-        assert get_data_field({"data": {"user": "tony"}}, "age") is None
-        # ❌ 查詢欄位不存在，應回傳 None
-
-    def test_get_data_field_missing_data(self):
-        assert get_data_field({}, "user") is None
-        # ❌ 沒有 data 欄位，應回傳 None
+def test_get_json_field_from_response_invalid_json():
+    mock_resp = MagicMock(spec=requests.Response)
+    mock_resp.json.side_effect = Exception("invalid")
+    assert get_json_field_from_response(mock_resp, "token") is None

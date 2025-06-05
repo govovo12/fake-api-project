@@ -30,3 +30,9 @@ def print_error(message: str):
     """彩色 error log 輸出，含時間 [TOOL]"""
     prefix = apply_color(_format_prefix("ERROR"), FAIL)
     print(f"{prefix} - {message}")
+
+@tool
+def print_success(message: str):
+    """彩色 success log 輸出，含時間 [TOOL]"""
+    prefix = apply_color(_format_prefix("SUCCESS"), OKGREEN)
+    print(f"{prefix} - {message}")

@@ -48,3 +48,29 @@ def write_temp_file(content: str, suffix: str = ".txt") -> Path:
     with NamedTemporaryFile(delete=False, mode="w", suffix=suffix, encoding="utf-8") as f:
         f.write(content)
         return Path(f.name)
+@tool
+def clear_dir_files(target_dir: Path, suffix: str = ".json") -> int:
+    """[TOOL] 批次刪除指定資料夾下所有指定副檔名的檔案。
+    Args:
+        target_dir (Path): 目標資料夾路徑
+        suffix (str): 指定副檔名，預設 ".json"
+    Returns:
+        int: 成功刪除的檔案數量
+    """
+    count = 0
+    if target_dir.exists():
+        for f in target_dir.iterdir():
+            if f.is_file() and f.name.endswith(suffix):
+                f.unlink()
+                count += 1
+    return count
+
+@tool
+def read_json(path: Path, encoding: str = "utf-8") -> Optional[dict]:
+    """[TOOL] 讀取 JSON 檔案內容，若失敗則回傳 None。"""
+    try:
+        import json
+        with path.open("r", encoding=encoding) as f:
+            return json.load(f)
+    except Exception:
+        return None

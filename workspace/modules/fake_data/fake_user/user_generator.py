@@ -7,7 +7,7 @@ from workspace.config.rules import error_codes
 
 fake = Faker()
 
-def generate_fake_user_data() -> Tuple[int, Dict[str, Any]]:
+def generate_user_data() -> Tuple[int, Dict[str, Any]]:
     """
     產生符合 Fake Store API 註冊格式的假用戶資料。
     回傳 (錯誤碼, 資料)，若成功錯誤碼為 0，否則對應錯誤碼。

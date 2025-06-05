@@ -85,12 +85,14 @@
 
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
+| file | clear_dir_files | [TOOL] 批次刪除指定資料夾下所有指定副檔名的檔案。 | ✅ |
 | file | clear_file | [TOOL] 清空指定檔案內容，若不存在則略過。 | ✅ |
 | file | ensure_dir | [TOOL] 確保資料夾存在，若不存在則建立。 | ✅ |
 | file | ensure_file | [TOOL] 確保檔案存在，若上層資料夾不存在則一併建立。 | ✅ |
 | file | file_exists | [TOOL] 檢查檔案是否存在。 | ✅ |
 | file | get_file_name_from_path | [TOOL] 取得檔案名稱（含副檔名）。 | ✅ |
 | file | is_file_empty | [TOOL] 判斷指定檔案是否為空。 | ✅ |
+| file | read_json | [TOOL] 讀取 JSON 檔案內容，若失敗則回傳 None。 | ✅ |
 | file | write_temp_file | [TOOL] 寫入暫存檔案，回傳檔案路徑。 | ✅ |
 
 ---
@@ -115,6 +117,7 @@
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
 | logger | format_log_message | [TOOL] 格式化 log 字串，標準格式：[timestamp] [level] message | ✅ |
+| logger | log_step | 根據狀態碼自動印出【步驟】成功/失敗訊息與錯誤說明 | ✅ |
 | logger | write_log | [TOOL] 寫入 log 訊息到指定檔案。 | ✅ |
 
 ---
@@ -156,6 +159,7 @@
 |---|---|---|---|
 | request | get | [TOOL] 最純粹 GET 請求，僅組裝並發送，SRP 單一責任原則。 | ✅ |
 | request | post | [TOOL] 最純粹 POST 請求，僅組裝並發送，SRP 單一責任原則。 | ✅ |
+| request | post_json | [TOOL] 發送 POST 請求並嘗試解析 JSON 結果 | ✅ |
 
 ---
 
@@ -163,10 +167,14 @@
 
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
-| response | extract_token | 從回應中提取 token 欄位 | ✅ |
-| response | get_data_field | 從 data 欄位中提取指定欄位值 | ✅ |
-| response | get_error_message | 從回應中提取錯誤訊息（優先使用 msg，其次 error） | ✅ |
-| response | is_success | 判斷是否為成功回應（code = 200 且含有 data 欄位） | ✅ |
+| response | extract_token_from_dict | 從 dict response 中提取 token 欄位 | ✅ |
+| response | get_data_field_from_dict | 從 dict response 的 data 欄位中提取指定欄位值 | ✅ |
+| response | get_data_field_from_response | 從 requests.Response 的 JSON → data 區段中提取欄位 | ✅ |
+| response | get_error_message_from_dict | 從 dict response 中提取錯誤訊息（優先 msg，其次 error） | ✅ |
+| response | get_json_field_from_response | 從 requests.Response 物件的 JSON 中擷取指定欄位，失敗回傳 None | ✅ |
+| response | is_register_success_dict | 判斷註冊是否成功（dict response 中有 id） | ✅ |
+| response | is_status_code_success | 判斷 requests.Response 狀態碼是否為 200 | ✅ |
+| response | is_success_dict | 判斷是否為成功回應（code = 200 且含有 data 欄位） | ✅ |
 
 ---
 
@@ -208,7 +216,7 @@
 
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
-| uuid | generate_batch_uuid | 產生一組全域唯一的 UUID（32 字元十六進位字串） [TOOL] | ✅ |
+| uuid | generate_batch_uuid_with_code | 產生一組全域唯一的 UUID，標準回傳（error_code, uuid） | ✅ |
 
 ---
 

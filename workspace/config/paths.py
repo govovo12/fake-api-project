@@ -1,4 +1,5 @@
 from pathlib import Path
+from workspace.utils.env.env_manager import EnvManager
 
 # Fake-API 專案根目錄 (config 同層往上兩層)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -29,8 +30,6 @@ UUID_GENERATOR_PATH = UUID_ROOT / "uuid_generator.py"
 # 任務模組資料夾
 TASKS_ROOT = WORKSPACE_ROOT / "modules" / "tasks"  # 建議存放控制器、任務模組
 
-
-
 # 測試資料（testdata）資料夾
 TESTDATA_ROOT = WORKSPACE_ROOT / "testdata"
 USER_TESTDATA_ROOT = TESTDATA_ROOT / "user"
@@ -55,6 +54,7 @@ CONFIG_ROOT = WORKSPACE_ROOT / "config"
 ENVS_CONFIG_ROOT = CONFIG_ROOT / "envs"
 FAKE_PRODUCT_CONFIG_PATH = ENVS_CONFIG_ROOT / "fake_product_config.py"
 FAKE_USER_CONFIG_PATH = ENVS_CONFIG_ROOT / "fake_user_config.py"  # 未來有 user config 可預留
+LOGIN_ENV_PATH = ENVS_CONFIG_ROOT / "api.env"
 
 def get_env_config_path(filename: str) -> Path:
     """取得 envs 目錄下的設定檔完整路徑"""
@@ -88,3 +88,9 @@ def get_unit_test_path(module: str) -> Path:
 def get_integration_test_path(module: str) -> Path:
     return INTEGRATION_TESTS_ROOT / module
 
+# ✅ API 端點設定（由 api.env 提供）
+API_ENV_PATH = get_env_config_path("api.env")
+_api_env = EnvManager.load_env_dict(API_ENV_PATH)
+
+REGISTER_ENDPOINT = _api_env.get("REGISTER_URL", "https://fakestoreapi.com/users")
+LOGIN_ENDPOINT = _api_env.get("LOGIN_URL", "https://fakestoreapi.com/auth/login")

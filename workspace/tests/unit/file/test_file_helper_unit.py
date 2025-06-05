@@ -61,3 +61,23 @@ def test_write_temp_file_and_content(tmp_path):
     assert temp_path.exists()
     assert temp_path.read_text(encoding="utf-8") == content
     assert temp_path.suffix == ".dat"
+def test_clear_dir_files(tmp_path):
+    """clear_dir_files 可批次刪除指定資料夾下所有指定副檔名的檔案"""
+    # 準備資料夾與多個 .json 檔
+    test_dir = tmp_path / "to_clear"
+    ensure_dir(test_dir)
+    files = [test_dir / f"test{i}.json" for i in range(5)]
+    for f in files:
+        f.write_text("dummy", encoding="utf-8")
+    # 再加一個 .txt 檔案，不應被刪除
+    txt_file = test_dir / "not_json.txt"
+    txt_file.write_text("should remain", encoding="utf-8")
+
+    from utils.file.file_helper import clear_dir_files
+
+    # 呼叫清理工具
+    count = clear_dir_files(test_dir)
+    assert count == 5
+    # 檢查所有 .json 都被刪除，.txt 檔案仍在
+    assert all(not f.exists() for f in files)
+    assert txt_file.exists()

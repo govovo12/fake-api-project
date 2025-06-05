@@ -79,3 +79,19 @@ def test_load_env_file_not_exist(tmp_path):
     """
     env_file = tmp_path / "notfound.env"
     assert load_env(env_file) is False
+
+def test_load_env_dict_returns_dict(tmp_path):
+    """
+    [DICT] 測試 load_env_dict 能正確回傳 key/value 結構（不寫入 os.environ）
+    """
+    from utils.env.env_manager import EnvManager  # ← 只為這條使用 class 方法
+
+    content = "A=1\nB=abc\n"
+    env_path = tmp_path / "login.env"
+    env_path.write_text(content, encoding="utf-8")
+
+    result = EnvManager.load_env_dict(env_path)
+    assert isinstance(result, dict)
+    assert result["A"] == "1"
+    assert result["B"] == "abc"
+    assert os.getenv("A") is None  # 確保沒有寫入 os.environ
