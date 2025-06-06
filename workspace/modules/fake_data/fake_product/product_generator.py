@@ -10,7 +10,7 @@ from workspace.config.rules.error_codes import ResultCode
 fake = Faker()
 DEFAULT_IMAGE = "https://fakestoreapi.com/img/default.jpg"
 
-def generate_product_data(
+def generate_fake_product(
     title: Optional[str] = None,
     price: Optional[float] = None,
     description: Optional[str] = None,

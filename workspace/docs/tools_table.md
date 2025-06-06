@@ -23,10 +23,10 @@
 
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
+| data | enrich_payload | 根據 .env 的欄位設定（逗號分隔）從資料中取值並組裝 payload。 | ✅ |
 | data | enrich_with_uuid | [TOOL] 將 dict 加工，附上 uuid 欄位，回傳新 dict（不修改原資料） | ✅ |
-| data | load_json | [TOOL] 嘗試讀取 JSON 檔案並回傳 dict。 | ✅ |
-| data | load_jsons | [TOOL] 批次讀取資料夾下所有 json 檔，回傳 {檔名: dict} | ✅ |
-| data | save_json | [TOOL] 將 dict 儲存成 JSON 檔案，成功回傳 True，失敗回傳 False。 | ✅ |
+| data | load_json | [TOOL] 通用 JSON 讀取器，回傳 (錯誤碼, 資料 or None) | ✅ |
+| data | save_json | [TOOL] 通用 JSON 寫入器，成功回傳 0，失敗回傳錯誤碼 | ✅ |
 
 ---
 
@@ -85,14 +85,14 @@
 
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
-| file | clear_dir_files | [TOOL] 批次刪除指定資料夾下所有指定副檔名的檔案。 | ✅ |
 | file | clear_file | [TOOL] 清空指定檔案內容，若不存在則略過。 | ✅ |
 | file | ensure_dir | [TOOL] 確保資料夾存在，若不存在則建立。 | ✅ |
 | file | ensure_file | [TOOL] 確保檔案存在，若上層資料夾不存在則一併建立。 | ✅ |
 | file | file_exists | [TOOL] 檢查檔案是否存在。 | ✅ |
 | file | get_file_name_from_path | [TOOL] 取得檔案名稱（含副檔名）。 | ✅ |
 | file | is_file_empty | [TOOL] 判斷指定檔案是否為空。 | ✅ |
-| file | read_json | [TOOL] 讀取 JSON 檔案內容，若失敗則回傳 None。 | ✅ |
+| file | load_json | [TOOL] 載入 JSON 檔案內容，失敗回傳 None。 | ✅ |
+| file | save_json | [TOOL] 安全儲存 JSON。成功回傳 True，失敗 False。使用臨時檔確保原檔不被破壞。 | ✅ |
 | file | write_temp_file | [TOOL] 寫入暫存檔案，回傳檔案路徑。 | ✅ |
 
 ---
@@ -220,8 +220,6 @@
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
 | uuid | generate_batch_uuid_with_code | 產生一組全域唯一的 UUID，標準回傳（error_code, uuid） | ✅ |
-| uuid | get_uuid_for_task | 取得對應任務的 UUID，如果沒設定則回傳 None | ✅ |
-| uuid | save_uuid_for_task | 儲存某任務對應的測資 UUID | ✅ |
 
 ---
 
