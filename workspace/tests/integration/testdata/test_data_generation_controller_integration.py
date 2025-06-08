@@ -1,4 +1,5 @@
 import pytest
+import uuid
 
 # 模組級標記：整合測試 + 控制器類別
 pytestmark = [pytest.mark.integration, pytest.mark.controller]
@@ -8,12 +9,13 @@ from workspace.config.paths import USER_TESTDATA_ROOT as USER_PATH, PRODUCT_TEST
 from workspace.utils.file.file_helper import file_exists
 
 def test_run_data_generation_controller(monkeypatch, capsys):
-    # ✅ mock 組合器：產生固定 uuid 與檔案
-    def mock_generate_testdata():
+    test_uuid = uuid.uuid4().hex
+
+    def mock_generate_testdata(uuid):
         return 0, {
-            "uuid": "mock-uuid",
-            "user_file": USER_PATH / "mock-uuid.json",
-            "product_file": PRODUCT_PATH / "mock-uuid.json",
+            "uuid": uuid,
+            "user_file": USER_PATH / f"{uuid}.json",
+            "product_file": PRODUCT_PATH / f"{uuid}.json",
             "user": {},
             "product": {}
         }
@@ -24,16 +26,18 @@ def test_run_data_generation_controller(monkeypatch, capsys):
         mock_generate_testdata,
     )
 
-    # ✅ 執行控制器，並捕捉回傳值
-    code, result = data_generation_controller.run_data_generation_controller()
+    code, result = data_generation_controller.run_data_generation_controller(test_uuid)
 
-    # ✅ 確認印出結果
+    # ✅ 捕捉印出內容，並確認關鍵訊息存在
     captured = capsys.readouterr()
-    assert "✅ 測資成功" in captured.out
+    print("\n=== CAPTURED OUTPUT ===")
+    print(captured.out)
+
+    # ✅ 改成更保險的字串檢查，不再使用 emoji 符號
+    assert "測資成功" in captured.out
     assert "使用者測資：" in captured.out
     assert "商品測資：" in captured.out
 
-    # ✅ 核心驗證：是否回傳 uuid 給總控器
     assert code == 0
-    assert result["uuid"] == "mock-uuid"
+    assert result["uuid"] == test_uuid
 

@@ -1,6 +1,6 @@
 # workspace/utils/logger/log_helper.py
 
-from workspace.config.rules.error_codes import ERROR_CODE_MSG_MAP
+from workspace.config.rules.error_codes import ERROR_CODE_MSG_MAP, ResultCode
 from workspace.utils.print.printer import print_info, print_error
 
 def tool(func):
@@ -18,7 +18,13 @@ def log_step(step: str, code: int):
         code (int): 狀態/錯誤碼
     """
     msg = ERROR_CODE_MSG_MAP.get(code, "未知狀態")
-    if code == 0:
+
+    SUCCESS_CODES = {
+        ResultCode.SUCCESS,
+        ResultCode.TESTDATA_GENERATION_SUCCESS,
+    }
+
+    if code in SUCCESS_CODES:
         print_info(f"【{step}】成功｜狀態碼：{code}｜說明：{msg}")
     else:
         print_error(f"【{step}】失敗｜狀態碼：{code}｜說明：{msg}")

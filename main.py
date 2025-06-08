@@ -1,51 +1,77 @@
 import argparse
+import importlib.util
+import os
 import sys
-import json
 from pathlib import Path
-from workspace.config.paths import PROJECT_ROOT
+from types import ModuleType
 
+# === 基本參數設定 ===
+WORKSPACE_DIR = Path(__file__).parent / "workspace"
+DEFAULT_SCAN_DIRS = [
+    WORKSPACE_DIR / "scripts",
+    WORKSPACE_DIR / "controller",
+]
+
+# === 掃描任務模組 ===
+def scan_task_modules(scan_dirs):
+    task_map = {}
+    for directory in scan_dirs:
+        for file in directory.rglob("*.py"):
+            if file.name.startswith("_"):
+                continue
+            module_path = file.relative_to(WORKSPACE_DIR).with_suffix("").as_posix().replace("/", ".")
+            spec = importlib.util.spec_from_file_location(module_path, file)
+            try:
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)  # type: ignore
+                if hasattr(module, "__task_info__"):
+                    task_name = module.__task_info__["task"]
+                    task_map[task_name] = {
+                        "module_path": module_path,
+                        "entry": module.__task_info__.get("entry", "run"),
+                        "module": module,
+                    }
+            except Exception as e:
+                print(f"⚠️ 載入失敗：{file}，錯誤：{e}")
+    return task_map
+
+# === 執行指定任務 ===
+def run_task(task_name, task_map):
+    task = task_map.get(task_name)
+    if not task:
+        print(f"❌ 找不到任務：{task_name}\n")
+        print("✅ 可用任務如下：")
+        for name, info in task_map.items():
+            print(f" - {name}（from {info['module_path']}）")
+        return
+
+    module = task["module"]
+    entry = getattr(module, task["entry"], None)
+    if not entry:
+        print(f"❌ 無法在模組中找到對應入口函式：{task['entry']}")
+        return
+
+    print(f"📦 載入任務模組：{task['module_path']}")
+    print(f"✅ 執行任務：{task_name}（{task['entry']}）")
+    print("[DEBUG] 開始執行 run()...\n")
+    try:
+        entry()
+    except Exception as e:
+        print(f"❌ 任務執行時發生錯誤：{e}")
+
+# === 主程式 ===
 def main():
-    parser = argparse.ArgumentParser(description="Fake-API 任務入口")
-    parser.add_argument("--folder", type=str, required=True, help="請指定任務資料夾名稱（如 controller、tasks）")
-    parser.add_argument("--task", type=str, required=True, help="請指定要執行的任務模組名稱（不含 .py）")
-    parser.add_argument("--params", type=str, default="", help="JSON 格式參數，例如: '{\"user_uuid\": \"abc123\"}'")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--task", help="指定要執行的任務")
     args = parser.parse_args()
 
-    folder = args.folder
-    task_name = args.task
-    param_str = args.params
+    sys.path.insert(0, str(WORKSPACE_DIR))  # ✅ 確保 workspace 成為根模組
+    task_map = scan_task_modules(DEFAULT_SCAN_DIRS)
 
-    task_module_path = PROJECT_ROOT / "workspace" / folder / f"{task_name}.py"
-    if not task_module_path.exists():
-        print(f"❌ 找不到任務模組：{task_module_path}")
-        sys.exit(1)
-
-    import importlib.util
-    spec = importlib.util.spec_from_file_location(task_name, task_module_path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-
-    # 解析參數（優先使用 CLI，否則 fallback 為模組內定義的 default_params）
-    try:
-        task_params = json.loads(param_str) if param_str else module.__task_info__.get("default_params", {})
-    except Exception as e:
-        print(f"❌ 無法解析 --params：{e}")
-        sys.exit(1)
-
-    if not hasattr(module, "__task_info__"):
-        print(f"❌ 模組 {task_name} 缺少 __task_info__。")
-        sys.exit(1)
-
-    entry_func = module.__task_info__.get("entry", None)
-    if not entry_func:
-        entry_func = getattr(module, "run", None)
-
-    if not callable(entry_func):
-        print(f"❌ 模組 {task_name} 缺少 entry 或 run 函式。")
-        sys.exit(1)
-
-    # 執行任務
-    entry_func(**task_params)
+    if args.task:
+        run_task(args.task, task_map)
+    else:
+        print("⚠️ 請使用 --task 參數指定要執行的任務。")
 
 if __name__ == "__main__":
     main()

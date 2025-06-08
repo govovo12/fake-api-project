@@ -1,59 +1,51 @@
-from typing import Any, Dict, Optional, Callable
-from workspace.config.rules.error_codes import ResultCode  # ✅ 改為直接從 error_codes 匯入 ResultCode
+from typing import Optional
+from workspace.config.rules.error_codes import ResultCode
 
-
+# ✅ 裝飾器定義，放在檔案最上方
 def tool(func):
-    """自製工具標記（供自動掃描工具表用）"""
     func.is_tool = True
     return func
 
+DEFAULT_CODE = getattr(ResultCode, "GENERIC_ERROR", 9999)
+
+ALL_CODES = {
+    v for k, v in vars(ResultCode).items()
+    if not k.startswith("__") and isinstance(v, int)
+}
+
 
 class APIError(Exception):
-    """[TOOL] API 相關自定義錯誤，可攜帶 status_code 與 code。"""
-    def __init__(self, message: str, status_code: Optional[int] = None, code: int = ResultCode.API_TIMEOUT):
+    def __init__(self, message: str, status_code: Optional[int] = None, code: Optional[int] = None):
         super().__init__(message)
         self.status_code = status_code
-        self.code = code
+        self.code = code if code is not None else DEFAULT_CODE
+        if self.code not in ALL_CODES:
+            print(f"[警告] APIError 使用了未註冊的錯誤碼：{self.code}")
 
 
 class ValidationError(Exception):
-    """[TOOL] 資料驗證相關錯誤，可攜帶 code 字串。"""
-    def __init__(self, message: str, code: str = "VALIDATION_ERROR"):
+    def __init__(self, message: str, code: str):
         super().__init__(message)
         self.code = code
 
 
-@tool
-def handle_exception(
-    e: Exception,
-    log: Optional[Callable[[str], None]] = None
-) -> Dict[str, Any]:
-    """
-    [TOOL] 統一將 Exception 轉為標準 dict，可選擇傳入 log callback。
-    - 支援 APIError/ValidationError，其他視為 unknown
-    - log: 可傳入 callable（msg: str），遇錯誤時可記錄（非必要）
-    """
-    if isinstance(e, APIError):
-        if log:
-            log(f"[APIError] code={e.code}, status_code={e.status_code}, msg={str(e)}")
+@tool  # ✅ 正確加上工具標記
+def handle_exception(exc: Exception) -> dict:
+    if isinstance(exc, APIError):
         return {
             "type": "api",
-            "code": e.code,
-            "status_code": e.status_code,
-            "msg": str(e),
+            "msg": str(exc),
+            "code": exc.code,
+            "status_code": exc.status_code,
         }
-    elif isinstance(e, ValidationError):
-        if log:
-            log(f"[ValidationError] code={e.code}, msg={str(e)}")
+    elif isinstance(exc, ValidationError):
         return {
             "type": "validation",
-            "code": e.code,
-            "msg": str(e),
+            "msg": str(exc),
+            "code": exc.code,
         }
     else:
-        if log:
-            log(f"[UnknownError] msg={str(e)}")
         return {
             "type": "unknown",
-            "msg": str(e),
+            "msg": str(exc),
         }

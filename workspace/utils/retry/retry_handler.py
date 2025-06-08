@@ -1,73 +1,89 @@
 import time
-from typing import Callable, Any, Tuple, Type, Optional
+from typing import Callable, Any, Tuple
+from functools import wraps
 
+# ✅ 兼容你的工具掃描系統
 def tool(func):
-    """自製工具標記（供自動掃描工具表用）"""
     func.is_tool = True
+    func.__tool__ = True  # 雙重標記
     return func
+
 
 @tool
 def retry_call(
     func: Callable,
     max_retries: int = 3,
-    delay: float = 1.0,
-    backoff: float = 1.0,
-    exceptions: Tuple[Type[Exception], ...] = (Exception,),
-    on_retry: Optional[Callable[[int, Exception], None]] = None,
+    delay: float = 0.2,
+    exceptions: Tuple[Exception] = (Exception,),
+    on_retry: Callable[[int, Exception], None] = None,
     *args,
     **kwargs
 ) -> Any:
     """
-    [TOOL] 通用 retry 函式。可重試任意函數，支援延遲、倍增、指定例外、重試 callback。
-    - func: 要重試的 function
-    - max_retries: 最大重試次數（含首次呼叫）
-    - delay: 初始等待秒數
-    - backoff: 每次失敗等待秒數倍增（1.0 = 固定等待）
-    - exceptions: 哪些例外類型要重試
-    - on_retry: 每次 retry 前的 callback (attempt, error)
-    - *args, **kwargs: 傳給 func 的參數
-    :return: 執行結果或最後 raise
+    ✅ 工具：捕捉例外型 retry 函式（func 可能會 raise）
+    - max_retries: 最多重試幾次
+    - delay: 每次重試等待秒數
+    - exceptions: 哪些例外會觸發 retry
+    - on_retry: 每次 retry 時會呼叫（可印出 / log）
     """
-    current_delay = delay
-    for attempt in range(1, max_retries + 1):
+    attempt = 0
+    while attempt < max_retries:
         try:
             return func(*args, **kwargs)
         except exceptions as e:
-            if attempt == max_retries:
-                raise
+            attempt += 1
             if on_retry:
                 on_retry(attempt, e)
-            time.sleep(current_delay)
-            current_delay *= backoff
+            if attempt < max_retries:
+                time.sleep(delay)
+            else:
+                raise  # 最後一次失敗就拋出
+
 
 @tool
 def retry_decorator(
     max_retries: int = 3,
-    delay: float = 1.0,
-    backoff: float = 1.0,
-    exceptions: Tuple[Type[Exception], ...] = (Exception,),
-    on_retry: Optional[Callable[[int, Exception], None]] = None
-) -> Callable:
+    delay: float = 0.2,
+    exceptions: Tuple[Exception] = (Exception,),
+    on_retry: Callable[[int, Exception], None] = None,
+):
     """
-    [TOOL] Retry 裝飾器。加在 function 上，讓其自動支援失敗重試。
-    - max_retries: 最大重試次數
-    - delay: 初始等待秒數
-    - backoff: 每次失敗等待秒數倍增
-    - exceptions: 哪些 Exception 觸發 retry
-    - on_retry: 每次 retry 時的 callback (attempt, error)
+    ✅ 裝飾器形式的 retry（支援 raise 例外型函式）
+    使用方式：
+    @retry_decorator(...)
+    def risky_func(...):
+        ...
     """
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable):
+        @wraps(func)
         def wrapper(*args, **kwargs):
-            current_delay = delay
-            for attempt in range(1, max_retries + 1):
-                try:
-                    return func(*args, **kwargs)
-                except exceptions as e:
-                    if attempt == max_retries:
-                        raise
-                    if on_retry:
-                        on_retry(attempt, e)
-                    time.sleep(current_delay)
-                    current_delay *= backoff
+            return retry_call(func, max_retries, delay, exceptions, on_retry, *args, **kwargs)
         return wrapper
     return decorator
+
+
+@tool
+def retry_tool(
+    func: Callable,
+    max_retries: int = 2,
+    delay_sec: float = 0.2,
+    retry_on: Callable[[Any], bool] = lambda result: not result[0]
+) -> Callable:
+    """
+    ✅ 工具：針對回傳 (success, ...) 結構的模組提供 retry 機制（不捕例外）
+    - func: 要包裝的目標函式，需回傳 tuple 且第一位為 bool success
+    - retry_on: 若回傳值符合條件（預設是失敗），則 retry
+    - 使用方式：
+        safe_func = retry_tool(original_func, max_retries=2)
+        success, meta = safe_func(*args, **kwargs)
+    """
+    def wrapper(*args, **kwargs):
+        for attempt in range(max_retries):
+            result = func(*args, **kwargs)
+            if not retry_on(result):
+                return result
+            time.sleep(delay_sec)
+        return result  # 最後一次回傳
+    wrapper.is_tool = True
+    wrapper.__tool__ = True
+    return wrapper

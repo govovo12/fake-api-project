@@ -1,30 +1,34 @@
-from typing import Dict
+from typing import Dict, Tuple, Optional
 
+# ✅ 工具函式標記（供 tools_table 掃描用）
 def tool(func):
-    """自製工具標記（供自動掃描工具表用）"""
     func.is_tool = True
     return func
 
-@tool
-def enrich_with_uuid(data: Dict, uuid: str) -> Dict:
-    """
-    [TOOL] 將 dict 加工，附上 uuid 欄位，回傳新 dict（不修改原資料）
-    
-    Args:
-        data (Dict): 原始資料
-        uuid (str): 要加上的 UUID
-    
-    Returns:
-        Dict: 帶 uuid 的新 dict
 
-    範例：
-        data = {"name": "test"}
-        enrich_with_uuid(data, "abc-123")
-        # -> {"name": "test", "uuid": "abc-123"}
+@tool
+def enrich_with_uuid(data: dict, uuid: str) -> Tuple[bool, Optional[dict], Optional[dict]]:
     """
-    new_data = data.copy()
-    new_data["uuid"] = uuid
-    return new_data
+    加上 uuid 欄位，回傳新資料（不修改原 dict）。
+    僅檢查資料型別與 clone 操作，不處理 uuid 的業務邏輯。
+    """
+    if not isinstance(data, dict):
+        return False, None, {
+            "reason": "not_a_dict",
+            "message": "傳入參數 data 不是 dict 類型",
+        }
+
+    try:
+        new_data = data.copy()
+        new_data["uuid"] = uuid  # ✅ 無論 uuid 是空或非格式，都直接加進去
+        return True, new_data, None
+    except Exception as e:
+        return False, None, {
+            "reason": "enrich_failed",
+            "message": str(e)
+        }
+
+
 @tool
 def enrich_payload(data: dict, fields_str: str) -> dict:
     """

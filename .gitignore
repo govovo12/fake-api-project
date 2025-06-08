@@ -9,7 +9,7 @@ __pycache__/
 
 # === 虛擬環境 ===
 venv/
-
+.vscode
 # === 測試產物與報告 ===
 workspace/reports/
 workspace/.pytest_cache/

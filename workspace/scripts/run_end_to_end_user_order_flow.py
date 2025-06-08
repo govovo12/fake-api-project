@@ -1,35 +1,39 @@
-"""
-總控器（簡化版）：產生測資 → 註冊帳號
-"""
-
-from workspace.controller.data_generation_controller import generate_and_save_testdata
-from workspace.controller.user_register_controller import run as run_user_register
+﻿from workspace.controller.data_generation_controller import run_generate_testdata_flow
+from workspace.utils.logger.trace_helper import print_trace
 from workspace.utils.logger.log_helper import log_step
-from workspace.config.rules import error_codes
-
-__task_info__ = {
-    "task": "run_end_to_end_user_order_flow",
-    "desc": "產生使用者測資，並執行註冊流程",
-    "version": "1.0.0",
-}
+from workspace.utils.uuid.uuid_generator import generate_batch_uuid_with_code
+from workspace.config.rules.error_codes import ResultCode, SUCCESS_CODES
 
 
-def run():
-    ResultCode = error_codes.ResultCode
+def run_end_to_end_user_order_flow():
+    """
+    主控：測試產生使用者與商品測資流程（由主控產生 UUID 並傳入）
+    """
+    print("\n[DEBUG] 開始執行 run()...\n")
 
-    print("\n🚀 開始執行 [使用者註冊流程] ...")
-
-    # Step 1: 產生測資
-    code, result = generate_and_save_testdata()
-    log_step("產生測資", code)
-    if code != ResultCode.SUCCESS or "uuid" not in result:
-        print(f"❌ 測資產生失敗：{result}")
+    # Step 0: 使用 uuid 生成器產生 UUID（含錯誤處理）
+    code, uuid = generate_batch_uuid_with_code()
+    if code != ResultCode.SUCCESS:
+        print("❌ UUID 產生失敗，錯誤碼：", code)
         return
 
-    uuid = result["uuid"]
-    print(f"✅ 測資產生成功，UUID：{uuid}")
+    print("\n🔹 UUID:", uuid)
 
-    # Step 2: 執行註冊控制器，傳入 UUID
-    run_user_register(user_uuid=uuid)
+    # Step 1: 傳入 UUID 給子控制器產測資
+    code, result, meta = run_generate_testdata_flow(uuid)
 
-    print("✅ [使用者註冊流程] 已完成。\n")
+    # Step 2: 印 trace 結果（用於 debug）
+    print_trace(uuid, "run_end_to_end_user_order_flow", meta)
+
+    # Step 3: 使用 log_helper 統一印出結果狀態
+    log_step("run_end_to_end_user_order_flow", code)
+
+    
+
+
+# ✅ 放在檔案最底部，確保函式已定義
+__task_info__ = {
+    "task": "run_end_to_end_user_order_flow",
+    "desc": "產生使用者測資（由主流程提供 UUID）",
+    "entry": "run_end_to_end_user_order_flow"
+}

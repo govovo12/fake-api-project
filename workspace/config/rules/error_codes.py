@@ -1,50 +1,51 @@
 class ResultCode:
-    SUCCESS = 0  # ✅ 成功
-
-    # ✅ UUID
-    UUID_GEN_FAIL = 10100
-    UUID_ATTACH_FAILED = 10101  # enrich_with_uuid 發生例外
-
-    # ✅ 使用者測資
-    USER_GENERATION_FAILED = 20101
+    # 使用者測資相關錯誤碼
     USER_TESTDATA_SAVE_FAILED = 20103
-    USER_UUID_ATTACH_FAILED = 20104
+    USER_TESTDATA_ALREADY_EXISTS = 20104
+    USER_TESTDATA_FILE_WRITE_FAILED = 20105
 
-    # ✅ 商品測資
-    PRODUCT_GENERATION_FAILED = 30101
+    # 商品測資相關錯誤碼
     PRODUCT_TESTDATA_SAVE_FAILED = 30103
-    PRODUCT_UUID_ATTACH_FAILED = 30104
+    PRODUCT_TESTDATA_ALREADY_EXISTS = 30104
+    PRODUCT_TESTDATA_FILE_WRITE_FAILED = 30105
 
-    # ✅ 組合器通用
-    TESTDATA_ALREADY_EXISTS = 90101
+    # 資料夾建立錯誤
+    TESTDATA_DIR_PREPARE_FAILED = 90105
 
-      # ✅ 註冊任務
-    REGISTER_PAYLOAD_BUILD_FAILED = 40101
-    REGISTER_REQUEST_FAILED = 40102
-    
-    # ✅ 註冊控制器步驟（Controller 可讀性用）
-    REGISTER_STEP_BUILD_PAYLOAD = 40901
-    REGISTER_STEP_SEND_REQUEST = 40902
-    REGISTER_STEP_SAVE_RESULT = 40903
-    ERROR_CODE_MSG_MAP = {
-    0: "success",
+    # 通用與流程成功
+    SUCCESS = 0
+    TESTDATA_GENERATION_SUCCESS = 10000
 
-    10100: "UUID 產生失敗",
-    10101: "加入 UUID 至測資失敗",
 
-    20101: "使用者測資產生失敗",
-    20103: "user 檔案寫入失敗",
-    20104: "user 附加 UUID 失敗",
+# ✅ 成功狀態碼集合（供 log_helper 判斷成功用）
+SUCCESS_CODES = {
+    ResultCode.SUCCESS,
+    ResultCode.TESTDATA_GENERATION_SUCCESS,
+}
 
-    30101: "商品測資產生失敗",
-    30103: "product 檔案寫入失敗",
-    30104: "product 附加 UUID 失敗",
 
-    40101: "註冊 payload 組裝失敗",
-    40102: "發送註冊 API 失敗",
-    40901: "組裝註冊 payload",
-    40902: "發送註冊請求",
-    40903: "儲存註冊結果",
+# 錯誤原因對應表
+REASON_CODE_MAP = {
+    "file_exists": ResultCode.USER_TESTDATA_ALREADY_EXISTS,
+    "mkdir_failed": ResultCode.TESTDATA_DIR_PREPARE_FAILED,
+    "save_failed": ResultCode.USER_TESTDATA_FILE_WRITE_FAILED,
+    "json_serialization_failed": ResultCode.USER_TESTDATA_FILE_WRITE_FAILED,
+    "dir_not_found": ResultCode.USER_TESTDATA_SAVE_FAILED,
+    "invalid_uuid": ResultCode.USER_TESTDATA_SAVE_FAILED,
+    "not_a_dict": ResultCode.USER_TESTDATA_SAVE_FAILED,
+    "file_not_found": ResultCode.USER_TESTDATA_FILE_WRITE_FAILED,
+    "file_empty_or_invalid": ResultCode.USER_TESTDATA_FILE_WRITE_FAILED,
+}
 
-    90101: "測資已存在，不需重新建立",
+# 錯誤碼對應訊息表（供 log_helper 使用）
+ERROR_CODE_MSG_MAP = {
+    ResultCode.SUCCESS: "success",
+    ResultCode.USER_TESTDATA_SAVE_FAILED: "無法儲存使用者測資",
+    ResultCode.USER_TESTDATA_ALREADY_EXISTS: "使用者測資已存在",
+    ResultCode.USER_TESTDATA_FILE_WRITE_FAILED: "寫入使用者測資失敗",
+    ResultCode.PRODUCT_TESTDATA_SAVE_FAILED: "無法儲存商品測資",
+    ResultCode.PRODUCT_TESTDATA_ALREADY_EXISTS: "商品測資已存在",
+    ResultCode.PRODUCT_TESTDATA_FILE_WRITE_FAILED: "寫入商品測資失敗",
+    ResultCode.TESTDATA_DIR_PREPARE_FAILED: "建立測資資料夾失敗",
+    ResultCode.TESTDATA_GENERATION_SUCCESS: "測資產生任務完成",
 }

@@ -1,16 +1,13 @@
-# fake_user/user_generator.py
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional
 from faker import Faker
 import uuid
-
-from workspace.config.rules import error_codes
+from workspace.config.rules.error_codes import ResultCode
 
 fake = Faker()
 
-def generate_fake_user() -> Tuple[int, Dict[str, Any]]:
+def generate_user_data() -> Tuple[int, Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
     """
-    產生符合 Fake Store API 註冊格式的假用戶資料。
-    回傳 (錯誤碼, 資料)，若成功錯誤碼為 0，否則對應錯誤碼。
+    建立假用戶資料。回傳三值：錯誤碼、資料 dict、錯誤 meta
     """
     try:
         name = fake.name()
@@ -18,12 +15,16 @@ def generate_fake_user() -> Tuple[int, Dict[str, Any]]:
         email = f"user_{unique_id}@mail.com"
         password = fake.password(length=12, special_chars=True, digits=True, upper_case=True)
 
-        return 0, {
+        return ResultCode.SUCCESS, {
             "name": name,
             "email": email,
             "password": password,
             "passwordConfirm": password
-        }
+        }, None
 
-    except Exception:
-        return error_codes.ACCOUNT_GEN_FAIL, {}
+    except Exception as e:
+        return ResultCode.USER_GENERATION_FAILED, None, {
+            "step": "generate_user_data",
+            "reason": "faker_error",
+            "message": str(e)
+        }

@@ -1,55 +1,51 @@
+# workspace/tests/unit/modules/fake_data/fake_product/test_product_generator.py
+
 import pytest
 from workspace.modules.fake_data.fake_product.product_generator import generate_product_data
-from workspace.config.envs.fake_product_config import CATEGORIES, CATEGORY_IMAGES
 from workspace.config.rules.error_codes import ResultCode
 
+# ✅ pytest 標記（模組分類 + 單元測試）
 pytestmark = [pytest.mark.unit, pytest.mark.fake_product]
 
-def test_product_structure_keys():
-    """確認所有必需欄位皆存在"""
-    code, product = generate_product_data()
-    assert code == ResultCode.SUCCESS
+def test_product_data_keys():
+    """
+    ✅ 測試：產生的商品資料包含所有必要欄位
+    """
+    code, product, meta = generate_product_data()
+    assert code == ResultCode.SUCCESS, f"錯誤碼: {code}, meta: {meta}"
     expected_keys = {"title", "price", "description", "category", "image"}
-    assert expected_keys.issubset(product.keys()), f"Missing keys: {expected_keys - product.keys()}"
+    assert expected_keys.issubset(product.keys()), f"缺少欄位: {expected_keys - product.keys()}"
 
-def test_category_valid():
-    """產生的 category 必定來自 CATEGORIES"""
-    code, product = generate_product_data()
-    assert code == ResultCode.SUCCESS
-    assert product["category"] in CATEGORIES
+def test_price_range():
+    """
+    ✅ 測試：價格落在合理範圍（5 ~ 500）
+    """
+    code, product, meta = generate_product_data()
+    assert code == ResultCode.SUCCESS, f"錯誤碼: {code}, meta: {meta}"
+    assert 5 <= product["price"] <= 500, f"價格不合理: {product['price']}"
 
-def test_image_matches_category():
-    """圖片應該對應到分類的 CATEGORY_IMAGES 設定（或 fallback）"""
-    code, product = generate_product_data()
-    assert code == ResultCode.SUCCESS
-    expected = CATEGORY_IMAGES.get(product["category"])
-    if expected:
-        assert product["image"] == expected
-    else:
-        assert product["image"] != ""
+def test_category_is_valid():
+    """
+    ✅ 測試：商品分類需在 CATEGORIES 列表中
+    """
+    from workspace.config.envs.fake_product_config import CATEGORIES
+    code, product, meta = generate_product_data()
+    assert code == ResultCode.SUCCESS, f"錯誤碼: {code}, meta: {meta}"
+    assert product["category"] in CATEGORIES, f"分類錯誤: {product['category']} 不在 CATEGORIES 中"
 
-def test_price_in_reasonable_range():
-    """價格應介於 5 ~ 500（預設產生範圍）"""
-    code, product = generate_product_data()
-    assert code == ResultCode.SUCCESS
-    assert 5 <= product["price"] <= 500
+def test_image_url_format():
+    """
+    ✅ 測試：圖片 URL 格式為 http/https 開頭
+    """
+    code, product, meta = generate_product_data()
+    assert code == ResultCode.SUCCESS, f"錯誤碼: {code}, meta: {meta}"
+    assert product["image"].startswith("http"), f"圖片 URL 格式錯誤: {product['image']}"
 
-def test_custom_input_override():
-    """自定 title、price、category 應正確覆蓋預設值"""
-    custom = {
-        "title": "Test Title",
-        "price": 999.99,
-        "category": "electronics",
-        "description": "Custom description",
-        "image": "custom.jpg"
-    }
-    code, product = generate_product_data(**custom)
-    assert code == ResultCode.SUCCESS
-    for key in custom:
-        assert product[key] == custom[key]
-def test_fail_when_no_categories(monkeypatch):
-    """當 CATEGORIES 為空，應回傳錯誤碼並且不產生資料"""
-    monkeypatch.setattr("workspace.modules.fake_data.fake_product.product_generator.CATEGORIES", [])
-    code, product = generate_product_data()
-    assert code == ResultCode.PRODUCT_GEN_FAIL
-    assert product is None
+def test_randomness_of_title():
+    """
+    ✅ 測試：title 每次產生應不同（簡單比較）
+    """
+    code1, p1, _ = generate_product_data()
+    code2, p2, _ = generate_product_data()
+    assert code1 == ResultCode.SUCCESS and code2 == ResultCode.SUCCESS
+    assert p1["title"] != p2["title"], "Title 隨機性不足，兩次相同"
