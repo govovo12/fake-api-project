@@ -1,138 +1,116 @@
-from pathlib import Path
-from tempfile import NamedTemporaryFile
-from typing import Tuple, Optional, Dict, List, Union
 import json
+from pathlib import Path
+from typing import Optional, Tuple
 
-# ✅ 自製工具標記器
+
+# ✅ 統一工具函式標記
 def tool(func):
-    """自製工具標記（供工具掃描器使用）"""
     func.is_tool = True
     return func
 
-# ✅ 檔案與資料夾處理工具
 
 @tool
 def ensure_dir(path: Path) -> None:
-    """[TOOL] 確保資料夾存在，若不存在則建立。"""
-    if not path.exists():
-        path.mkdir(parents=True, exist_ok=True)
+    """
+    若目錄不存在則建立
+    """
+    path.mkdir(parents=True, exist_ok=True)
+
 
 @tool
 def ensure_file(path: Path) -> None:
-    """[TOOL] 確保檔案存在，若上層資料夾不存在則一併建立。"""
-    if not path.parent.exists():
-        path.parent.mkdir(parents=True, exist_ok=True)
+    """
+    若檔案不存在則建立空檔案
+    """
     if not path.exists():
+        ensure_dir(path.parent)
         path.touch()
+
 
 @tool
 def file_exists(path: Path) -> bool:
-    """[TOOL] 檢查檔案是否存在。"""
+    """
+    檢查檔案是否存在
+    """
     return path.is_file()
+
 
 @tool
 def is_file_empty(path: Path) -> bool:
-    """[TOOL] 判斷指定檔案是否為空。"""
-    return path.is_file() and path.stat().st_size == 0
+    """
+    檢查檔案是否為空（0 bytes）
+    """
+    return path.stat().st_size == 0
+
 
 @tool
 def get_file_name_from_path(path: Path) -> str:
-    """[TOOL] 取得檔案名稱（含副檔名）。"""
+    """
+    從 Path 回傳檔名
+    """
     return path.name
+
 
 @tool
 def clear_file(path: Path) -> None:
     """
-    若檔案存在則刪除，不 raise error。
+    清空檔案內容（不刪檔）
     """
-    try:
-        if path.exists():
-            path.unlink()
-    except Exception:
-        pass  
+    if path.exists():
+        path.write_text("", encoding="utf-8")
 
-@tool
-def write_temp_file(prefix: str, content: str = "") -> Path:
-    """
-    建立一個暫存檔案，寫入指定內容。
-    """
-    import tempfile
-
-    tmp = Path(tempfile.mktemp(prefix=f"{prefix}_", suffix=".tmp"))
-    tmp.write_text(content, encoding="utf-8")
-    return tmp
-
-
-# ✅ JSON 檔案通用工具
-
-@tool
-def load_json(path: Path, encoding: str = "utf-8") -> Optional[dict]:
-    """[TOOL] 載入 JSON 檔案內容，失敗回傳 None。"""
-    try:
-        import json
-        with path.open("r", encoding=encoding) as f:
-            return json.load(f)
-    except Exception:
-        return None
 
 @tool
 def save_json(path: Path, data: dict) -> Tuple[bool, Optional[dict]]:
     """
-    將 dict 寫入 JSON 檔案，支援錯誤通報。
+    儲存 JSON 至指定路徑
     """
     try:
-        json_str = json.dumps(data, ensure_ascii=False, indent=2)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        return True, None
     except TypeError as e:
         return False, {
             "reason": "json_serialization_failed",
             "message": str(e),
-            "path": str(path)
+            "path": str(path),
         }
-    try:
-        path.write_text(json_str, encoding="utf-8")
-        return True, None
     except Exception as e:
         return False, {
             "reason": "save_failed",
             "message": str(e),
-            "path": str(path)
+            "path": str(path),
         }
 
 
 @tool
-def get_testdata_file_path(kind: str, uuid: str) -> Tuple[bool, Optional[Path], Optional[dict]]:
+def generate_testdata_path(kind: str, uuid: str) -> Tuple[Optional[Path], Optional[dict]]:
     """
-    組合測試資料儲存用的路徑，格式為：.generated/{kind}/{uuid}.json
-
-    Args:
-        kind (str): 資料種類（例如 user, product）
-        uuid (str): UUID 或識別字串
-
-    Returns:
-        Tuple: (success, path 或 None, meta 或 None)
+    回傳測資儲存路徑。若格式不合法，回傳錯誤。
+    kind: user / product
     """
-    VALID_KINDS = {"user", "product", "order"}
-
-    if kind not in VALID_KINDS:
-        return False, None, {
+    if kind not in {"user", "product"}:
+        return None, {
             "reason": "invalid_kind",
-            "message": f"無效類型：{kind}，必須是 {sorted(VALID_KINDS)}"
+            "message": f"無效資料類型: {kind}",
+            "kind": kind
         }
 
-    if not uuid or not isinstance(uuid, str):
-        return False, None, {
+    if not isinstance(uuid, str) or not uuid or len(uuid.replace("-", "")) != 32:
+        return None, {
             "reason": "invalid_uuid",
-            "message": f"uuid 格式錯誤：{uuid}"
+            "message": f"無效 UUID 格式: {uuid}",
+            "uuid": uuid
         }
 
-    try:
-        base_dir = Path("workspace/.generated") / kind
-        base_dir.mkdir(parents=True, exist_ok=True)
-        return True, base_dir / f"{uuid}.json", None
-    except Exception as e:
-        return False, None, {
-            "reason": "path_generation_failed",
-            "message": str(e),
-            "context": {"kind": kind, "uuid": uuid}
-        }
+    path = Path(f"workspace/testdata/{kind}/{uuid}.json")
+    return path, None
 
+def write_temp_file(data: str, suffix=".tmp") -> Path:
+    """
+    將資料寫入暫存檔並回傳路徑
+    """
+    temp_path = Path(f"workspace/.tmp/{uuid.uuid4().hex}{suffix}")
+    temp_path.parent.mkdir(parents=True, exist_ok=True)
+    temp_path.write_text(data, encoding="utf-8")
+    return temp_path

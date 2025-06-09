@@ -1,19 +1,23 @@
-# utils/uuid/uuid_generator.py
-
+from typing import Tuple, Optional
 import uuid
-from workspace.config.rules.error_codes import ResultCode
 
+# ✅ 自製工具函式標記（供 tools_table 掃描用）
 def tool(func):
-    """工具模組標記裝飾器（供工具掃描器使用）"""
     func.is_tool = True
     return func
 
 @tool
-def generate_batch_uuid_with_code() -> tuple:
+def generate_batch_uuid_with_code() -> Tuple[bool, Optional[str], Optional[dict]]:
     """
-    產生一組全域唯一的 UUID，標準回傳（error_code, uuid）
+    工具模組：產生 UUID，回傳格式為 (success, uuid, meta)
+    - 成功：True, uuid 字串, None
+    - 失敗：False, None, meta（包含 reason 與 message）
     """
     try:
-        return ResultCode.SUCCESS, uuid.uuid4().hex
-    except Exception:
-        return ResultCode.UUID_GEN_FAIL, None
+        generated_uuid = uuid.uuid4().hex
+        return True, generated_uuid, None
+    except Exception as e:
+        return False, None, {
+            "reason": "uuid_generate_failed",
+            "message": str(e)
+        }

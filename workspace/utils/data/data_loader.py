@@ -1,81 +1,93 @@
-# workspace/utils/data/data_loader.py
-
-from pathlib import Path
 from typing import Optional, Tuple
-from workspace.utils.file import file_helper
+from pathlib import Path
+import json
 
-# ✅ 工具函式裝飾器：內建於模組中（非 import）
+
+# ✅ 工具函式標記（供 tools_table 掃描用）
 def tool(func):
     func.is_tool = True
     return func
 
 
 @tool
-def load_json(path_or_str: str | Path) -> Tuple[bool, Optional[dict], Optional[dict]]:
+def load_json(path_or_str: str) -> Tuple[Optional[dict], Optional[dict]]:
     """
-    通用 JSON 讀取器，明確區分：不存在 / 格式錯誤 / 空內容。
+    從指定路徑讀取 JSON 檔案，回傳 dict 或錯誤資訊。
+
+    Returns:
+        data: 成功則為 dict，否則為 None
+        meta: 若錯誤則包含 reason / message / path
     """
-    path = Path(path_or_str)
-
-    # ✅ 正確責任：路徑不存在
-    if not path.exists():
-        return False, None, {
-            "reason": "file_not_found",
-            "message": "指定的 JSON 檔案不存在",
-            "path": str(path)
-        }
-
     try:
-        data = file_helper.load_json(path)
-
-        # ✅ 正確責任：存在但內容為 None（可能是空檔或格式錯）
-        if data is None:
-            return False, None, {
-                "reason": "file_empty_or_invalid",
-                "message": "檔案內容為 None，可能為空或非 JSON",
-                "path": str(path)
+        path = Path(path_or_str)
+        if not path.exists():
+            return None, {
+                "reason": "file_not_found",
+                "message": f"File not found: {path}"
             }
 
-        return True, data, None
+        with open(path, "r", encoding="utf-8") as f:
+            content = f.read()
+            if not content.strip():
+                return None, {
+                    "reason": "file_empty_or_invalid",
+                    "message": f"File is empty or invalid: {path}"
+                }
 
-    except Exception as e:
-        return False, None, {
-            "reason": "load_json_failed",
+            try:
+                data = json.loads(content)
+                return data, None
+            except json.JSONDecodeError as e:
+                return None, {
+                    "reason": "load_json_failed",
+                    "message": str(e),
+                    "path": str(path)
+                }
+
+    except PermissionError as e:
+        return None, {
+            "reason": "permission_denied",
             "message": str(e),
-            "path": str(path)
+            "path": path_or_str
         }
-
-
+    except Exception as e:
+        return None, {
+            "reason": "unknown_exception",
+            "message": str(e),
+            "path": path_or_str
+        }
 
 
 @tool
-def save_json(data: dict, path_or_str: str | Path) -> Tuple[bool, Optional[dict]]:
+def save_json(path_or_str: str, data: dict) -> Tuple[bool, Optional[dict]]:
     """
-    通用 JSON 寫入器，成功回傳 True，失敗回傳錯誤資訊
+    將 dict 寫入指定路徑為 JSON 檔案。
+
+    Returns:
+        success: 是否寫入成功
+        meta: 若失敗則包含 reason / message / path
     """
-    path = Path(path_or_str)
     try:
-        result = file_helper.save_json(data, path)
-        return result, None if result else {
-            "reason": "save_returned_false",
-            "message": "file_helper.save_json 回傳 False",
-            "path": str(path)
-        }
+        path = Path(path_or_str)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        return True, None
     except PermissionError as e:
         return False, {
             "reason": "permission_denied",
             "message": str(e),
-            "path": str(path)
+            "path": str(path_or_str)
         }
-    except UnicodeEncodeError as e:
+    except TypeError as e:
         return False, {
-            "reason": "encoding_error",
+            "reason": "json_serialization_failed",
             "message": str(e),
-            "path": str(path)
+            "path": str(path_or_str)
         }
     except Exception as e:
         return False, {
-            "reason": "unknown_exception",
+            "reason": "save_returned_false",
             "message": str(e),
-            "path": str(path)
+            "path": str(path_or_str)
         }

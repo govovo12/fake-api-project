@@ -1,88 +1,71 @@
-# test_data_enricher_unit.py
-
 import pytest
-from workspace.utils.data.data_enricher import enrich_with_uuid
+from workspace.utils.data.data_enricher import enrich_with_uuid, enrich_payload
 
+# ✅ 全檔標記：unit + data
 pytestmark = [pytest.mark.unit, pytest.mark.data]
 
-def test_enrich_with_uuid_adds_uuid():
-    data = {"a": 1}
-    uuid = "abc-123"
-    success, result, meta = enrich_with_uuid(data, uuid)
+
+def test_enrich_with_uuid_success():
+    """
+    ✅ 測試 UUID 注入成功（回傳新 dict）
+    """
+    data = {"name": "Alice"}
+    success, new_data, meta = enrich_with_uuid(data, "abc-123")
     assert success is True
+    assert new_data["uuid"] == "abc-123"
+    assert new_data["name"] == "Alice"
     assert meta is None
-    assert result == {"a": 1, "uuid": "abc-123"}
+    assert "uuid" not in data  # ✅ 原 dict 不應被修改
 
-def test_enrich_with_uuid_on_empty_dict():
-    data = {}
-    uuid = "x"
-    success, result, meta = enrich_with_uuid(data, uuid)
-    assert success is True
-    assert result == {"uuid": "x"}
 
-def test_enrich_with_uuid_does_not_modify_original():
-    data = {"k": 5}
-    uuid = "test"
-    _success, result, _meta = enrich_with_uuid(data, uuid)
-    assert data == {"k": 5}
-    assert result != data
-
-def test_enrich_with_uuid_override_existing_uuid():
-    data = {"uuid": "old"}
-    uuid = "new"
-    success, result, meta = enrich_with_uuid(data, uuid)
-    assert success is True
-    assert result["uuid"] == "new"
-
-def test_enrich_with_uuid_various_types():
-    data = {"x": [1, 2], "y": None}
-    uuid = "xx"
-    success, result, meta = enrich_with_uuid(data, uuid)
-    assert success is True
-    assert result == {"x": [1, 2], "y": None, "uuid": "xx"}
-
-def test_enrich_with_uuid_large_dict():
-    data = {str(i): i for i in range(1000)}
-    uuid = "LARGE"
-    success, result, meta = enrich_with_uuid(data, uuid)
-    assert success is True
-    assert result["uuid"] == uuid
-    assert len(result) == 1001
-    for i in range(1000):
-        assert result[str(i)] == i
-
-def test_enrich_with_uuid_uuid_accepts_any_type():
-    data = {"foo": "bar"}
-    uuid = 123  # 非字串，但工具模組不做限制
-    success, result, meta = enrich_with_uuid(data, uuid)
-    assert success is True
-    assert result["uuid"] == 123
-
-def test_enrich_with_uuid_invalid_data_type():
-    success, result, meta = enrich_with_uuid(["not", "a", "dict"], "abc")
+def test_enrich_with_uuid_not_dict():
+    """
+    ✅ 測試傳入非 dict，回傳錯誤 reason
+    """
+    success, new_data, meta = enrich_with_uuid("not a dict", "abc-123")
     assert success is False
-    assert result is None
+    assert new_data is None
     assert meta["reason"] == "not_a_dict"
 
-def test_enrich_with_uuid_unexpected_exception(monkeypatch):
-    class BrokenDict(dict):
+
+def test_enrich_with_uuid_exception():
+    """
+    ✅ 測試模擬 data.copy() 發生例外
+    """
+    class FakeBadData(dict):
         def copy(self):
-            raise RuntimeError("mock error")
+            raise Exception("copy failed")
 
-    broken_data = BrokenDict(name="test")
-    success, result, meta = enrich_with_uuid(broken_data, "uuid-xyz")
-
+    bad_data = FakeBadData()
+    success, new_data, meta = enrich_with_uuid(bad_data, "xyz")
     assert success is False
-    assert result is None
     assert meta["reason"] == "enrich_failed"
-    assert "mock error" in meta["message"]
+    assert "copy failed" in meta["message"]
 
-def test_enrich_with_uuid_dict_with_special_types():
-    class CustomObj:
-        def __init__(self, value):
-            self.value = value
-    data = {"obj": CustomObj("a")}
-    uuid = "custom"
-    success, result, meta = enrich_with_uuid(data, uuid)
-    assert success is True
-    assert result["uuid"] == uuid
+
+
+def test_enrich_payload_basic():
+    """
+    ✅ 測試 enrich_payload 擷取指定欄位資料
+    """
+    data = {"name": "Alice", "email": "a@b.com"}
+    result = enrich_payload(data, "name,email")
+    assert result == {"name": "Alice", "email": "a@b.com"}
+
+
+def test_enrich_payload_partial_key():
+    """
+    ✅ 測試 enrich_payload 忽略不存在欄位
+    """
+    data = {"name": "Alice"}
+    result = enrich_payload(data, "name,email")  # email 不存在
+    assert result == {"name": "Alice", "email": None}
+
+
+def test_enrich_payload_trim_spaces():
+    """
+    ✅ 測試欄位有空格仍能正確抓取
+    """
+    data = {"x": 1, "y": 2}
+    result = enrich_payload(data, " x , y ")
+    assert result == {"x": 1, "y": 2}

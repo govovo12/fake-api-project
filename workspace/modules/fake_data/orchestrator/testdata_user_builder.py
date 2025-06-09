@@ -9,13 +9,12 @@ def build_user_data(uuid: str) -> Tuple[int, Optional[dict], Optional[dict]]:
     子組合器：產生使用者測資並附加 UUID
     回傳格式：code, user_data or None, meta or None
     """
-
-    # Step 1: 產生使用者資料
-    code, user_data, meta = generate_user_data()
-    if code != ResultCode.SUCCESS:
+    success, user_data, meta = generate_user_data()
+    if not success:
+        reason = meta.get("reason", "")
+        code = REASON_CODE_MAP.get(reason, ResultCode.USER_GENERATION_FAILED)
         return code, None, meta
 
-    # Step 2: 附加 UUID
     success, user_with_uuid, meta = enrich_with_uuid(user_data, uuid)
     if not success:
         reason = meta.get("reason", "")

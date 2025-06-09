@@ -20,7 +20,7 @@ def enrich_with_uuid(data: dict, uuid: str) -> Tuple[bool, Optional[dict], Optio
 
     try:
         new_data = data.copy()
-        new_data["uuid"] = uuid  # ✅ 無論 uuid 是空或非格式，都直接加進去
+        new_data["uuid"] = uuid  # ✅ 無論 uuid 是否為空，都原樣加上
         return True, new_data, None
     except Exception as e:
         return False, None, {

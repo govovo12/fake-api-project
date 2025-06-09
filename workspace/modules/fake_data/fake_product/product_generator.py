@@ -1,11 +1,8 @@
-# fake_product/product_generator.py
-
 from typing import Dict, Any, Optional, Tuple
 from faker import Faker
 import random
 
 from workspace.config.envs.fake_product_config import CATEGORIES, CATEGORY_IMAGES
-from workspace.config.rules.error_codes import ResultCode
 
 fake = Faker()
 DEFAULT_IMAGE = "https://fakestoreapi.com/img/default.jpg"
@@ -16,15 +13,16 @@ def generate_product_data(
     description: Optional[str] = None,
     category: Optional[str] = None,
     image: Optional[str] = None
-) -> Tuple[int, Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+) -> Tuple[bool, Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
     """
-    產生假商品資料：符合 Fake Store API 格式
-    回傳 (錯誤碼, 資料, 錯誤 meta)，成功時 meta 為 None。
+    測資產生器：產生假商品資料（符合 Fake Store API 格式）
+    - 可自訂傳入欄位參數以覆蓋預設值
+    - 不包含 UUID（由組合器決定）
+    回傳格式：success, data, meta
     """
     try:
         if not CATEGORIES:
-            return ResultCode.PRODUCT_GENERATION_FAILED, None, {
-                "step": "generate_product_data",
+            return False, None, {
                 "reason": "empty_categories",
                 "message": "CATEGORIES 配置為空，無法選擇商品分類"
             }
@@ -39,11 +37,10 @@ def generate_product_data(
             "image": image or CATEGORY_IMAGES.get(selected_category, DEFAULT_IMAGE)
         }
 
-        return ResultCode.SUCCESS, data, None
+        return True, data, None
 
     except Exception as e:
-        return ResultCode.PRODUCT_GENERATION_FAILED, None, {
-            "step": "generate_product_data",
+        return False, None, {
             "reason": "unexpected_exception",
             "message": str(e)
         }

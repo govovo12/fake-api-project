@@ -1,43 +1,71 @@
 import pytest
-import uuid
+from uuid import uuid4
+from workspace.controller.data_generation_controller import run_generate_testdata_flow
+from workspace.config.rules.error_codes import ResultCode
 
-# 模組級標記：整合測試 + 控制器類別
-pytestmark = [pytest.mark.integration, pytest.mark.controller]
+pytestmark = [pytest.mark.testdatacontroller, pytest.mark.integration]
 
-from workspace.controller import data_generation_controller
-from workspace.config.paths import USER_TESTDATA_ROOT as USER_PATH, PRODUCT_TESTDATA_ROOT as PRODUCT_PATH
-from workspace.utils.file.file_helper import file_exists
 
-def test_run_data_generation_controller(monkeypatch, capsys):
-    test_uuid = uuid.uuid4().hex
+def test_controller_all_success(monkeypatch, controller_mock):
+    uuid = uuid4().hex
 
-    def mock_generate_testdata(uuid):
-        return 0, {
-            "uuid": uuid,
-            "user_file": USER_PATH / f"{uuid}.json",
-            "product_file": PRODUCT_PATH / f"{uuid}.json",
-            "user": {},
-            "product": {}
-        }
+    controller_mock.patch_all_success(monkeypatch, {
+        "prepare_testdata_files": (ResultCode.SUCCESS, {}, {}),
+        "build_product_data": (ResultCode.SUCCESS, {"title": "mock", "price": 10.0}, {}),
+        "write_product_data": (ResultCode.SUCCESS, {}, {}),
+        "build_user_data": (ResultCode.SUCCESS, {"username": "tester", "email": "a@b.com"}, {}),
+        "write_user_data": (ResultCode.SUCCESS, {}, {}),
+    }, base_path="workspace.controller.data_generation_controller")
 
-    monkeypatch.setattr(
-        data_generation_controller,
-        "generate_testdata",
-        mock_generate_testdata,
+    code, user_data, product_data = run_generate_testdata_flow(uuid)
+
+    assert code == ResultCode.TESTDATA_GENERATION_SUCCESS
+    assert "username" in user_data
+    assert "title" in product_data
+
+
+def test_controller_fail_on_product_build(monkeypatch, controller_mock):
+    uuid = uuid4().hex
+
+    controller_mock.patch_all_success(monkeypatch, {
+        "prepare_testdata_files": (ResultCode.SUCCESS, {}, {}),
+    }, base_path="workspace.controller.data_generation_controller")
+
+    controller_mock.patch_fail_on(
+        monkeypatch,
+        fail_step="build_product_data",
+        fail_code=ResultCode.PRODUCT_GENERATION_FAILED,
+        reason="unexpected_exception",
+        base_path="workspace.controller.data_generation_controller"
     )
 
-    code, result = data_generation_controller.run_data_generation_controller(test_uuid)
+    code, user_data, product_data = run_generate_testdata_flow(uuid)
 
-    # ✅ 捕捉印出內容，並確認關鍵訊息存在
-    captured = capsys.readouterr()
-    print("\n=== CAPTURED OUTPUT ===")
-    print(captured.out)
+    assert code == ResultCode.PRODUCT_GENERATION_FAILED
+    assert user_data is None
+    assert product_data is None
 
-    # ✅ 改成更保險的字串檢查，不再使用 emoji 符號
-    assert "測資成功" in captured.out
-    assert "使用者測資：" in captured.out
-    assert "商品測資：" in captured.out
 
-    assert code == 0
-    assert result["uuid"] == test_uuid
+def test_controller_fail_on_user_write(monkeypatch, controller_mock):
+    uuid = uuid4().hex
 
+    controller_mock.patch_all_success(monkeypatch, {
+        "prepare_testdata_files": (ResultCode.SUCCESS, {}, {}),
+        "build_product_data": (ResultCode.SUCCESS, {"title": "mock product"}, {}),
+        "write_product_data": (ResultCode.SUCCESS, {}, {}),
+        "build_user_data": (ResultCode.SUCCESS, {"username": "tester"}, {}),
+    }, base_path="workspace.controller.data_generation_controller")
+
+    controller_mock.patch_fail_on(
+        monkeypatch,
+        fail_step="write_user_data",
+        fail_code=ResultCode.USER_TESTDATA_FILE_WRITE_FAILED,
+        reason="save_failed_user",
+        base_path="workspace.controller.data_generation_controller"
+    )
+
+    code, user_data, product_data = run_generate_testdata_flow(uuid)
+
+    assert code == ResultCode.USER_TESTDATA_FILE_WRITE_FAILED
+    assert user_data is None or isinstance(user_data, dict)
+    assert product_data is None or isinstance(product_data, dict)

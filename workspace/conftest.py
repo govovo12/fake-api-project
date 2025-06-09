@@ -14,8 +14,9 @@ from utils.fixture.fixture_request import fake_session
 from utils.fixture.fixture_stub import stub_cart_payload
 from utils.fixture.fixture_assert import fake_status_code
 
-# 匯入 mock 工廠
+# 匯入 mock 工廠與控制器流程 mock 工具
 from utils.mock.mock_helper import get_mock
+from workspace.utils.base.base_controller_test import BaseControllerFlowMock
 
 # 修正 sys.path（保留原本邏輯）
 ROOT = Path(__file__).resolve().parents[0]
@@ -43,3 +44,9 @@ def mock_factory():
     def _factory(name: str, *args, **kwargs):
         return get_mock(name, *args, **kwargs)
     return _factory
+
+# ✅ controller_mock：控制器整合測試專用工具
+@pytest.fixture
+def controller_mock():
+    """提供控制器流程模擬工具（Shopee 風格整合測試）"""
+    return BaseControllerFlowMock()
