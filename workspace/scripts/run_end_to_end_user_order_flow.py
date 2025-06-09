@@ -2,7 +2,7 @@
 from workspace.utils.logger.trace_helper import print_trace
 from workspace.utils.logger.log_helper import log_step
 from workspace.utils.uuid.uuid_generator import generate_batch_uuid_with_code
-from workspace.config.rules.error_codes import ResultCode, SUCCESS_CODES, REASON_CODE_MAP
+from workspace.config.rules.error_codes import ResultCode, SUCCESS_CODES, ResultCode
 
 
 def run_end_to_end_user_order_flow():
@@ -14,7 +14,7 @@ def run_end_to_end_user_order_flow():
     # Step 0: 使用 uuid 生成器產生 UUID（含錯誤處理）
     success, uuid, meta = generate_batch_uuid_with_code()
     if not success:
-        code = REASON_CODE_MAP.get(meta.get("reason"), ResultCode.UUID_GEN_FAIL)
+        code = ResultCode.get(meta.get("reason"), ResultCode.UUID_GEN_FAIL)
         print("❌ UUID 產生失敗，錯誤碼：", code)
         return
     code = ResultCode.SUCCESS

@@ -1,0 +1,24 @@
+# ✅ 假資料與格式處理
+faker>=24.0.0                 # 用於 user/product 測資
+pydantic>=2.0.0               # 如果有用資料驗證
+python-dotenv>=1.0.0          # 讀取 .env 檔案
+requests>=2.31.0              # 發 API 用
+
+# ✅ CLI 輸出 / 彩色列印
+colorama>=0.4.6               # 終端顏色（printer.py 使用）
+rich>=13.7.0                  # 樹狀輸出 / 色彩美化
+tabulate>=0.9.0               # 表格輸出（markdown, CLI）
+click>=8.1.7                  # CLI 工具常用（看你之後是否要加 command）
+
+# ✅ 單元測試完整體系
+pytest>=8.2.0                 # 主測試工具
+pytest-mock>=3.12.0           # mock 支援
+pytest-cov>=5.0.0             # coverage 支援
+requests-mock>=1.11.0         # 如有測試 API 行為
+pytest-xdist>=3.5.0           # 多核心併行測試（加速）
+
+# ✅ 模板與產表工具
+jinja2>=3.1.0                 # 產出 .md / CLI 工具表用
+
+# ✅ 檔案工具（視情況加）
+pathvalidate>=3.2.0           # 驗證路徑合法性（產檔用）

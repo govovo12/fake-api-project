@@ -1,6 +1,8 @@
 from typing import Dict, Any, Tuple, Optional
 from faker import Faker
 
+from workspace.config.rules.error_codes import ResultCode
+
 fake = Faker()
 
 def generate_user_data() -> Tuple[bool, Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
@@ -22,6 +24,6 @@ def generate_user_data() -> Tuple[bool, Optional[Dict[str, Any]], Optional[Dict[
 
     except Exception as e:
         return False, None, {
-            "reason": "faker_error",
+            "code": ResultCode.FAKER_GENERATE_FAILED,
             "message": str(e),
         }

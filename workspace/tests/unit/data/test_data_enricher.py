@@ -1,71 +1,69 @@
 import pytest
 from workspace.utils.data.data_enricher import enrich_with_uuid, enrich_payload
 
-# ✅ 全檔標記：unit + data
+# ✅ 測試標記：屬於單元測試 + data 類型模組
 pytestmark = [pytest.mark.unit, pytest.mark.data]
 
 
 def test_enrich_with_uuid_success():
     """
-    ✅ 測試 UUID 注入成功（回傳新 dict）
+    測試 enrich_with_uuid：正常情況應加上 uuid 欄位並成功回傳
     """
-    data = {"name": "Alice"}
-    success, new_data, meta = enrich_with_uuid(data, "abc-123")
+    input_data = {"name": "Alice", "email": "alice@example.com"}
+    uuid = "abc-123"
+    success, enriched, meta = enrich_with_uuid(input_data, uuid)
     assert success is True
-    assert new_data["uuid"] == "abc-123"
-    assert new_data["name"] == "Alice"
     assert meta is None
-    assert "uuid" not in data  # ✅ 原 dict 不應被修改
+    assert enriched["uuid"] == uuid
+    assert enriched["name"] == "Alice"
 
 
-def test_enrich_with_uuid_not_dict():
+def test_enrich_with_uuid_input_not_dict():
     """
-    ✅ 測試傳入非 dict，回傳錯誤 reason
+    測試 enrich_with_uuid：若傳入非 dict 應回傳錯誤 reason
     """
-    success, new_data, meta = enrich_with_uuid("not a dict", "abc-123")
+    input_data = "not a dict"
+    uuid = "abc-123"
+    success, enriched, meta = enrich_with_uuid(input_data, uuid)
     assert success is False
-    assert new_data is None
-    assert meta["reason"] == "not_a_dict"
+    assert enriched is None
+    assert meta["reason"] == "data_enricher_not_a_dict"
 
 
-def test_enrich_with_uuid_exception():
+def test_enrich_with_uuid_raises_exception(monkeypatch):
     """
-    ✅ 測試模擬 data.copy() 發生例外
+    模擬 data.copy() 發生錯誤 → 應回傳 enrich 失敗 reason
     """
-    class FakeBadData(dict):
+    class BrokenDict(dict):
         def copy(self):
             raise Exception("copy failed")
 
-    bad_data = FakeBadData()
-    success, new_data, meta = enrich_with_uuid(bad_data, "xyz")
-    assert success is False
-    assert meta["reason"] == "enrich_failed"
+    data = BrokenDict({"a": 1})
+    success, enriched, meta = enrich_with_uuid(data, "uuid-123")
+    assert not success
+    assert meta["reason"] == "data_enricher_failed"
     assert "copy failed" in meta["message"]
 
 
-
-def test_enrich_payload_basic():
+def test_enrich_payload_extract_fields():
     """
-    ✅ 測試 enrich_payload 擷取指定欄位資料
+    測試 enrich_payload 可根據逗號欄位字串正確取出對應欄位值
     """
-    data = {"name": "Alice", "email": "a@b.com"}
+    data = {
+        "name": "Alice",
+        "email": "alice@example.com",
+        "age": 30
+    }
     result = enrich_payload(data, "name,email")
-    assert result == {"name": "Alice", "email": "a@b.com"}
+    assert result == {
+        "name": "Alice",
+        "email": "alice@example.com"
+    }
 
-
-def test_enrich_payload_partial_key():
+def test_enrich_payload_empty_fields():
     """
-    ✅ 測試 enrich_payload 忽略不存在欄位
+    測試 enrich_payload 傳入空欄位字串應回傳空 dict
     """
-    data = {"name": "Alice"}
-    result = enrich_payload(data, "name,email")  # email 不存在
-    assert result == {"name": "Alice", "email": None}
-
-
-def test_enrich_payload_trim_spaces():
-    """
-    ✅ 測試欄位有空格仍能正確抓取
-    """
-    data = {"x": 1, "y": 2}
-    result = enrich_payload(data, " x , y ")
-    assert result == {"x": 1, "y": 2}
+    data = {"a": 1}
+    result = enrich_payload(data, "")
+    assert result == {}

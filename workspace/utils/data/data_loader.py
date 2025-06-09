@@ -1,93 +1,43 @@
-from typing import Optional, Tuple
-from pathlib import Path
 import json
+from pathlib import Path
+from workspace.config.rules.error_codes import ResultCode
 
-
-# ✅ 工具函式標記（供 tools_table 掃描用）
-def tool(func):
-    func.is_tool = True
-    return func
-
-
-@tool
-def load_json(path_or_str: str) -> Tuple[Optional[dict], Optional[dict]]:
+def load_json(path: Path) -> tuple[bool, dict | None]:
     """
-    從指定路徑讀取 JSON 檔案，回傳 dict 或錯誤資訊。
-
-    Returns:
-        data: 成功則為 dict，否則為 None
-        meta: 若錯誤則包含 reason / message / path
+    讀取 JSON 檔案，檢查檔案存在性與格式
     """
+    if not path.exists():
+        return False, {
+            "code": ResultCode.FILE_NOT_FOUND,
+            "message": f"找不到檔案：{path}"
+        }
+
     try:
-        path = Path(path_or_str)
-        if not path.exists():
-            return None, {
-                "reason": "file_not_found",
-                "message": f"File not found: {path}"
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        if not isinstance(data, dict):
+            return False, {
+                "code": ResultCode.INVALID_FILE_DATA,
+                "message": "檔案內容不是字典格式"
             }
 
-        with open(path, "r", encoding="utf-8") as f:
-            content = f.read()
-            if not content.strip():
-                return None, {
-                    "reason": "file_empty_or_invalid",
-                    "message": f"File is empty or invalid: {path}"
-                }
+        return True, data
 
-            try:
-                data = json.loads(content)
-                return data, None
-            except json.JSONDecodeError as e:
-                return None, {
-                    "reason": "load_json_failed",
-                    "message": str(e),
-                    "path": str(path)
-                }
+    except json.JSONDecodeError as e:
+        return False, {
+            "code": ResultCode.FILE_LOAD_FAILED,
+            "message": f"JSON 解碼失敗：{e}"
+        }
 
     except PermissionError as e:
-        return None, {
-            "reason": "permission_denied",
-            "message": str(e),
-            "path": path_or_str
-        }
-    except Exception as e:
-        return None, {
-            "reason": "unknown_exception",
-            "message": str(e),
-            "path": path_or_str
-        }
-
-
-@tool
-def save_json(path_or_str: str, data: dict) -> Tuple[bool, Optional[dict]]:
-    """
-    將 dict 寫入指定路徑為 JSON 檔案。
-
-    Returns:
-        success: 是否寫入成功
-        meta: 若失敗則包含 reason / message / path
-    """
-    try:
-        path = Path(path_or_str)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-        return True, None
-    except PermissionError as e:
         return False, {
-            "reason": "permission_denied",
-            "message": str(e),
-            "path": str(path_or_str)
+            "code": ResultCode.FILE_PERMISSION_DENIED,
+            "message": f"檔案權限不足：{e}"
         }
-    except TypeError as e:
-        return False, {
-            "reason": "json_serialization_failed",
-            "message": str(e),
-            "path": str(path_or_str)
-        }
+
     except Exception as e:
         return False, {
-            "reason": "save_returned_false",
-            "message": str(e),
-            "path": str(path_or_str)
+            "code": ResultCode.UNKNOWN_FILE_SAVE_ERROR,
+            "message": f"不明錯誤：{e}"
         }

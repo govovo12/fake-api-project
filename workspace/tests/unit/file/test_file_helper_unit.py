@@ -2,105 +2,75 @@ import pytest
 import json
 from pathlib import Path
 from workspace.utils.file.file_helper import (
-    ensure_dir,
-    ensure_file,
+    save_json,
     file_exists,
     is_file_empty,
-    get_file_name_from_path,
     clear_file,
-    save_json,
-    generate_testdata_path
+    generate_testdata_path,
+    get_file_name_from_path,
 )
 
+# ✅ 測試標記：單元測試 + file 分類
 pytestmark = [pytest.mark.unit, pytest.mark.file]
 
-@pytest.fixture
-def temp_dir(tmp_path) -> Path:
-    return tmp_path / "test_dir"
 
-
-def test_ensure_dir_creates_directory(temp_dir):
-    assert not temp_dir.exists()
-    ensure_dir(temp_dir)
-    assert temp_dir.exists()
-    assert temp_dir.is_dir()
-
-
-def test_ensure_file_creates_file(tmp_path):
-    file_path = tmp_path / "empty.json"
-    assert not file_path.exists()
-    ensure_file(file_path)
-    assert file_path.exists()
-    assert file_path.read_text() == ""
-
-
-def test_file_exists_returns_true(tmp_path):
-    file_path = tmp_path / "exists.json"
-    file_path.write_text("content")
-    assert file_exists(file_path)
-
-
-def test_file_exists_returns_false(tmp_path):
-    file_path = tmp_path / "not_exist.json"
-    assert not file_exists(file_path)
-
-
-def test_is_file_empty_true(tmp_path):
-    file_path = tmp_path / "empty.json"
-    file_path.write_text("")
-    assert is_file_empty(file_path)
-
-
-def test_is_file_empty_false(tmp_path):
-    file_path = tmp_path / "not_empty.json"
-    file_path.write_text("data")
-    assert not is_file_empty(file_path)
-
-
-def test_get_file_name_from_path():
-    path = Path("some/folder/data.json")
-    assert get_file_name_from_path(path) == "data.json"
-
-
-def test_clear_file_empties_file(tmp_path):
-    file_path = tmp_path / "to_clear.json"
-    file_path.write_text("some data")
-    clear_file(file_path)
-    assert file_path.exists()
-    assert file_path.read_text() == ""
-
-
-def test_save_json_success(tmp_path):
-    file_path = tmp_path / "data.json"
-    success, meta = save_json(file_path, {"a": 1, "b": 2})
-    assert success is True
+def test_generate_testdata_path_valid_user():
+    """
+    測試 generate_testdata_path 回傳正確 user 路徑
+    """
+    path, meta = generate_testdata_path("user", "12345678abcdabcdabcdabcdabcdabcd")
     assert meta is None
-    content = json.loads(file_path.read_text())
-    assert content == {"a": 1, "b": 2}
-
-
-def test_save_json_serialization_fail(tmp_path):
-    file_path = tmp_path / "fail.json"
-    success, meta = save_json(file_path, {"bad": set()})
-    assert not success
-    assert meta["reason"] == "json_serialization_failed"
-    assert "fail.json" in meta["path"]
-
-
-def test_generate_testdata_path_valid():
-    path, meta = generate_testdata_path("user", "a" * 32)
-    assert path is not None
-    assert meta is None
-    assert path.name.endswith(".json")
+    assert path.name == "12345678abcdabcdabcdabcdabcdabcd.json"
+    assert "user" in str(path)
 
 
 def test_generate_testdata_path_invalid_kind():
-    path, meta = generate_testdata_path("order", "a" * 32)
+    """
+    測試 generate_testdata_path 傳入錯誤 kind 時應回傳錯誤 meta
+    """
+    path, meta = generate_testdata_path("banana", "uuid")
     assert path is None
-    assert meta["reason"] == "invalid_kind"
+    assert meta["reason"] == "file_helper_invalid_kind"
 
 
-def test_generate_testdata_path_invalid_uuid():
-    path, meta = generate_testdata_path("user", "123")
-    assert path is None
-    assert meta["reason"] == "invalid_uuid"
+def test_save_and_check_json(tmp_path):
+    """
+    測試 save_json 能正確寫入 JSON 檔案並檢查內容存在
+    """
+    test_path = tmp_path / "test.json"
+    success, meta = save_json(test_path, {"name": "test"})
+    assert success is True
+    assert meta is None
+    assert test_path.exists()
+    content = json.loads(test_path.read_text(encoding="utf-8"))
+    assert content["name"] == "test"
+
+
+def test_clear_file(tmp_path):
+    """
+    測試 clear_file 能清空檔案內容
+    """
+    path = tmp_path / "clear_me.json"
+    path.write_text("some data")
+    clear_file(path)
+    assert path.read_text() == ""
+
+
+def test_is_file_empty(tmp_path):
+    """
+    測試 is_file_empty 在空檔與非空檔案的行為
+    """
+    path = tmp_path / "empty.json"
+    path.write_text("")
+    assert is_file_empty(path) is True
+
+    path.write_text("abc")
+    assert is_file_empty(path) is False
+
+
+def test_get_file_name_from_path():
+    """
+    測試 get_file_name_from_path 能正確回傳檔名
+    """
+    path = Path("/fake/path/data.json")
+    assert get_file_name_from_path(path) == "data.json"

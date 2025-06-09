@@ -2,6 +2,7 @@ from typing import Dict, Any, Optional, Tuple
 from faker import Faker
 import random
 
+from workspace.config.rules.error_codes import ResultCode
 from workspace.config.envs.fake_product_config import CATEGORIES, CATEGORY_IMAGES
 
 fake = Faker()
@@ -23,7 +24,7 @@ def generate_product_data(
     try:
         if not CATEGORIES:
             return False, None, {
-                "reason": "empty_categories",
+                "code": ResultCode.PRODUCT_CATEGORY_EMPTY,
                 "message": "CATEGORIES 配置為空，無法選擇商品分類"
             }
 
@@ -41,6 +42,6 @@ def generate_product_data(
 
     except Exception as e:
         return False, None, {
-            "reason": "unexpected_exception",
+            "code": ResultCode.PRODUCT_GENERATION_FAILED,
             "message": str(e)
         }
