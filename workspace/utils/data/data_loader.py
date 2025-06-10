@@ -1,43 +1,36 @@
 import json
 from pathlib import Path
-from workspace.config.rules.error_codes import ResultCode
+from workspace.config.rules.error_codes import ResultCode, TaskModuleError
 
-def load_json(path: Path) -> tuple[bool, dict | None]:
+# ✅ 工具函式標記（供 tools_table 掃描用）
+def tool(func):
+    func.is_tool = True
+    return func
+
+
+@tool
+def load_json(path: Path) -> dict:
     """
-    讀取 JSON 檔案，檢查檔案存在性與格式
+    讀取 JSON 檔案並回傳 dict。
+    若檔案不存在、無法解析或格式錯誤，拋出 TaskModuleError。
     """
     if not path.exists():
-        return False, {
-            "code": ResultCode.FILE_NOT_FOUND,
-            "message": f"找不到檔案：{path}"
-        }
+        raise TaskModuleError(ResultCode.FILE_NOT_FOUND)
 
     try:
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         if not isinstance(data, dict):
-            return False, {
-                "code": ResultCode.INVALID_FILE_DATA,
-                "message": "檔案內容不是字典格式"
-            }
+            raise TaskModuleError(ResultCode.INVALID_FILE_DATA)
 
-        return True, data
+        return data
 
-    except json.JSONDecodeError as e:
-        return False, {
-            "code": ResultCode.FILE_LOAD_FAILED,
-            "message": f"JSON 解碼失敗：{e}"
-        }
+    except json.JSONDecodeError:
+        raise TaskModuleError(ResultCode.FILE_LOAD_FAILED)
 
-    except PermissionError as e:
-        return False, {
-            "code": ResultCode.FILE_PERMISSION_DENIED,
-            "message": f"檔案權限不足：{e}"
-        }
+    except PermissionError:
+        raise TaskModuleError(ResultCode.FILE_PERMISSION_DENIED)
 
-    except Exception as e:
-        return False, {
-            "code": ResultCode.UNKNOWN_FILE_SAVE_ERROR,
-            "message": f"不明錯誤：{e}"
-        }
+    except Exception:
+        raise TaskModuleError(ResultCode.UNKNOWN_FILE_LOAD_ERROR)

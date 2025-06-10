@@ -1,77 +1,67 @@
 import pytest
-from workspace.modules.fake_data.orchestrator.testdata_file_preparer import prepare_testdata_files
-from workspace.config.rules.error_codes import ResultCode
+from unittest.mock import patch
+from workspace.modules.fake_data.orchestrator import testdata_file_preparer
+from workspace.config.rules.error_codes import ResultCode, TaskModuleError
 
 pytestmark = [pytest.mark.unit, pytest.mark.orchestrator]
 
 
-# ✅ 成功流程：建立 user 與 product 檔案
-def test_prepare_testdata_success(monkeypatch):
-    monkeypatch.setattr(
-        "workspace.modules.fake_data.orchestrator.testdata_file_preparer.generate_testdata_path",
-        lambda kind, uuid: (f"/mock/{kind}_{uuid}.json", {})
-    )
-    monkeypatch.setattr(
-        "workspace.modules.fake_data.orchestrator.testdata_file_preparer.file_exists",
-        lambda path: False
-    )
-    monkeypatch.setattr(
-        "workspace.modules.fake_data.orchestrator.testdata_file_preparer.write_empty_data_file",
-        lambda path, kind: (True, {})
-    )
+class TestPrepareTestdataFiles:
+    """Unit tests for prepare_testdata_files using safe_call + retry."""
 
-    code, data, meta = prepare_testdata_files("abc123")
-    assert code == ResultCode.SUCCESS
-    assert "user_testdata_path" in data
-    assert "product_testdata_path" in data
-    assert meta is None
+    def test_successful_creation(self):
+        """
+        ✅ 正常建立 user / product 測資檔案，應回傳 None。
+        """
+        with patch.object(testdata_file_preparer, "generate_testdata_path") as mock_path, \
+             patch.object(testdata_file_preparer, "file_exists", return_value=False), \
+             patch.object(testdata_file_preparer, "safe_call", return_value=None):
 
+            mock_path.side_effect = ["user_path.json", "product_path.json"]
+            result = testdata_file_preparer.prepare_testdata_files("fba3f655350842c5b94a2fa50e42c65e")
+            assert result is None
 
-# ❌ 模擬 user 寫入失敗
-def test_write_user_file_failed(monkeypatch):
-    monkeypatch.setattr(
-        "workspace.modules.fake_data.orchestrator.testdata_file_preparer.generate_testdata_path",
-        lambda kind, uuid: (f"/mock/{kind}_{uuid}.json", {})
-    )
-    monkeypatch.setattr(
-        "workspace.modules.fake_data.orchestrator.testdata_file_preparer.file_exists",
-        lambda path: False
-    )
+    def test_file_already_exists(self):
+        """
+        ❌ 若任一檔案已存在，應回傳 USER_TESTDATA_ALREADY_EXISTS。
+        """
+        with patch.object(testdata_file_preparer, "generate_testdata_path") as mock_path, \
+             patch.object(testdata_file_preparer, "file_exists", return_value=True):
 
-    def custom_write(path, kind):
-        if "user" in path:
-            return False, {"reason": "save_failed_user"}
-        return True, {}
+            mock_path.side_effect = ["user.json", "product.json"]
+            result = testdata_file_preparer.prepare_testdata_files("fba3f655350842c5b94a2fa50e42c65e")
+            assert result == ResultCode.USER_TESTDATA_ALREADY_EXISTS
 
-    monkeypatch.setattr(
-        "workspace.modules.fake_data.orchestrator.testdata_file_preparer.write_empty_data_file",
-        custom_write
-    )
+    def test_user_creation_failed(self):
+        """
+        ❌ 建立 user 測資檔案失敗，應回傳錯誤碼。
+        """
+        with patch.object(testdata_file_preparer, "generate_testdata_path") as mock_path, \
+             patch.object(testdata_file_preparer, "file_exists", return_value=False), \
+             patch.object(testdata_file_preparer, "safe_call") as mock_safe:
 
-    code, data, meta = prepare_testdata_files("abc123")
-    assert code == ResultCode.USER_TESTDATA_FILE_WRITE_FAILED
+            mock_path.side_effect = ["user.json", "product.json"]
+            mock_safe.side_effect = [40015, None]  # user fail, product success
+            result = testdata_file_preparer.prepare_testdata_files("fba3f655350842c5b94a2fa50e42c65e")
+            assert result == ResultCode.TESTDATA_USER_FILE_WRITE_FAILED
 
+    def test_product_creation_failed(self):
+        """
+        ❌ 建立 product 測資檔案失敗，應回傳錯誤碼。
+        """
+        with patch.object(testdata_file_preparer, "generate_testdata_path") as mock_path, \
+             patch.object(testdata_file_preparer, "file_exists", return_value=False), \
+             patch.object(testdata_file_preparer, "safe_call") as mock_safe:
 
-# ❌ 模擬 product 寫入失敗
-def test_write_product_file_failed(monkeypatch):
-    monkeypatch.setattr(
-        "workspace.modules.fake_data.orchestrator.testdata_file_preparer.generate_testdata_path",
-        lambda kind, uuid: (f"/mock/{kind}_{uuid}.json", {})
-    )
-    monkeypatch.setattr(
-        "workspace.modules.fake_data.orchestrator.testdata_file_preparer.file_exists",
-        lambda path: False
-    )
+            mock_path.side_effect = ["user.json", "product.json"]
+            mock_safe.side_effect = [None, 40014]  # user success, product fail
+            result = testdata_file_preparer.prepare_testdata_files("fba3f655350842c5b94a2fa50e42c65e")
+            assert result == ResultCode.TESTDATA_PRODUCT_FILE_WRITE_FAILED
 
-    def custom_write(path, kind):
-        if "product" in path:
-            return False, {"reason": "save_failed_product"}
-        return True, {}
-
-    monkeypatch.setattr(
-        "workspace.modules.fake_data.orchestrator.testdata_file_preparer.write_empty_data_file",
-        custom_write
-    )
-
-    code, data, meta = prepare_testdata_files("abc123")
-    assert code == ResultCode.PRODUCT_TESTDATA_FILE_WRITE_FAILED
+    def test_generate_path_failed(self):
+        """
+        ❌ 若 generate_testdata_path 拋出錯誤（未包在 safe_call），應由最外層 except 捕捉。
+        """
+        with patch.object(testdata_file_preparer, "generate_testdata_path", side_effect=Exception("mock error")):
+            result = testdata_file_preparer.prepare_testdata_files("fba3f655350842c5b94a2fa50e42c65e")
+            assert result == ResultCode.UNKNOWN_FILE_SAVE_ERROR

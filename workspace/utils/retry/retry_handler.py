@@ -1,6 +1,8 @@
 import time
 from typing import Callable, Any, Tuple
 from functools import wraps
+from typing import Callable, Any, Optional
+from workspace.config.rules.error_codes import TaskModuleError
 
 # ✅ 兼容你的工具掃描系統
 def tool(func):
@@ -87,3 +89,24 @@ def retry_tool(
     wrapper.is_tool = True
     wrapper.__tool__ = True
     return wrapper
+
+@tool
+def safe_call(
+    func: Callable,
+    *args,
+    max_retries: int = 1,
+    retry_on: Optional[Callable[[int], bool]] = None,
+) -> Optional[int]:
+    """
+    ✅ 工具：捕捉 TaskModuleError 的函式呼叫包裝器
+    - 成功：return ResultCode.SUCCESS
+    - 失敗：return 錯誤碼（int）
+    - 可設定 retry_on 判斷是否需要 retry
+    """
+    for attempt in range(max_retries + 1):
+        try:
+            func(*args)
+            return ResultCode.SUCCESS
+        except TaskModuleError as e:
+            if attempt >= max_retries or not (retry_on and retry_on(e.code)):
+                return e.code

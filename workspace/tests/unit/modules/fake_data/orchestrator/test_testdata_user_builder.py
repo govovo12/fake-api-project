@@ -1,69 +1,47 @@
 import pytest
-from utils.mock.mock_helper import get_mock
+from unittest.mock import patch
+from workspace.modules.fake_data.orchestrator import testdata_user_builder
 from workspace.config.rules.error_codes import ResultCode
 
-# ✅ pytest 標記：單元 + 測資模組
-pytestmark = [pytest.mark.unit, pytest.mark.testdata]
+pytestmark = [pytest.mark.unit, pytest.mark.orchestrator]
 
-# ✅ 固定 UUID fixture
-@pytest.fixture
-def mock_uuid():
-    return "mock-user-uuid"
 
-# ✅ Case 1：模擬 generate_user_data 失敗
-def test_generate_user_fail(mocker, mock_uuid):
-    mock_gen = get_mock("mock_function", return_value=(8888, None, {"reason": "gen_user_failed"}))
-    mocker.patch("workspace.modules.fake_data.orchestrator.testdata_user_builder.generate_user_data", mock_gen)
+class TestBuildUserData:
+    """Unit tests for build_user_data using safe_call."""
 
-    from workspace.modules.fake_data.orchestrator.testdata_user_builder import build_user_data
-    code, data, meta = build_user_data(mock_uuid)
+    def test_successful_build(self):
+        """
+        ✅ 正常產生 user 並加上 UUID，應回傳 None。
+        """
+        with patch.object(testdata_user_builder, "safe_call", return_value=None):
+            result = testdata_user_builder.build_user_data("fba3f655350842c5b94a2fa50e42c65e")
+            assert result is None
 
-    assert mock_gen.called
-    assert code == 8888
-    assert data is None
-    assert isinstance(meta, dict)
-    assert meta["reason"] == "gen_user_failed"
+    def test_generate_user_data_failed(self):
+        """
+        ❌ 若產生 user 資料失敗，應回傳對應錯誤碼。
+        """
+        with patch.object(testdata_user_builder, "safe_call") as mock_safe:
+            mock_safe.side_effect = [ResultCode.USER_GENERATION_FAILED]
+            result = testdata_user_builder.build_user_data("fba3f655350842c5b94a2fa50e42c65e")
+            assert result == ResultCode.USER_GENERATION_FAILED
 
-# ✅ Case 2：模擬 enrich_with_uuid 失敗
-def test_enrich_user_uuid_fail(mocker, mock_uuid):
-    fake_user = {"email": "test@example.com"}
-    mock_gen = get_mock("mock_function", return_value=(0, fake_user, None))
-    mock_enrich = get_mock("mock_function", return_value=(False, None, {"reason": "missing_user_field"}))
+    def test_enrich_with_uuid_failed(self):
+        """
+        ❌ 若附加 UUID 失敗，應回傳對應錯誤碼。
+        """
+        with patch.object(testdata_user_builder, "safe_call") as mock_safe:
+            mock_safe.side_effect = [
+                None,  # generate_user_data 成功
+                ResultCode.USER_UUID_ATTACH_FAILED  # enrich 失敗
+            ]
+            result = testdata_user_builder.build_user_data("fba3f655350842c5b94a2fa50e42c65e")
+            assert result == ResultCode.USER_UUID_ATTACH_FAILED
 
-    mocker.patch("workspace.modules.fake_data.orchestrator.testdata_user_builder.generate_user_data", mock_gen)
-    mocker.patch("workspace.modules.fake_data.orchestrator.testdata_user_builder.enrich_with_uuid", mock_enrich)
-
-    from workspace.modules.fake_data.orchestrator.testdata_user_builder import build_user_data
-    code, data, meta = build_user_data(mock_uuid)
-
-    assert mock_enrich.called
-    args, _ = mock_enrich.call_args
-    assert args[0] == fake_user
-    assert args[1] == mock_uuid
-
-    assert code == ResultCode.USER_UUID_ATTACH_FAILED
-    assert data is None
-    assert isinstance(meta, dict)
-    assert meta["reason"] == "missing_user_field"
-
-# ✅ Case 3：成功流程
-def test_success_user_build(mocker, mock_uuid):
-    fake_user = {"email": "test@example.com"}
-    enriched_user = {"email": "test@example.com", "uuid": mock_uuid}
-
-    mock_gen = get_mock("mock_function", return_value=(0, fake_user, None))
-    mock_enrich = get_mock("mock_function", return_value=(True, enriched_user, None))
-
-    mocker.patch("workspace.modules.fake_data.orchestrator.testdata_user_builder.generate_user_data", mock_gen)
-    mocker.patch("workspace.modules.fake_data.orchestrator.testdata_user_builder.enrich_with_uuid", mock_enrich)
-
-    from workspace.modules.fake_data.orchestrator.testdata_user_builder import build_user_data
-    code, data, meta = build_user_data(mock_uuid)
-
-    args, _ = mock_enrich.call_args
-    assert args[0] == fake_user
-    assert args[1] == mock_uuid
-
-    assert code == ResultCode.SUCCESS
-    assert data == enriched_user
-    assert meta is None
+    def test_unexpected_exception(self):
+        """
+        ❌ 若整體流程有非預期錯誤，應回傳 UNKNOWN_FILE_SAVE_ERROR。
+        """
+        with patch.object(testdata_user_builder, "safe_call", side_effect=Exception("boom")):
+            result = testdata_user_builder.build_user_data("fba3f655350842c5b94a2fa50e42c65e")
+            assert result == ResultCode.UNKNOWN_FILE_SAVE_ERROR

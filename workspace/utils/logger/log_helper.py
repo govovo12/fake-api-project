@@ -1,30 +1,25 @@
-# workspace/utils/logger/log_helper.py
+from typing import Optional
 
-from workspace.config.rules.error_codes import ERROR_CODE_MSG_MAP, ResultCode
-from workspace.utils.print.printer import print_info, print_error
+from workspace.config.rules.error_codes import SUCCESS_CODES, ERROR_MESSAGES
 
-def tool(func):
-    """自製工具標記（供自動掃描工具表用）"""
-    func.is_tool = True
-    return func
 
-@tool
-def log_step(step: str, code: int):
+def is_success_code(code: int) -> bool:
     """
-    根據狀態碼自動印出【步驟】成功/失敗訊息與錯誤說明
-
-    Args:
-        step (str): 步驟或行為名稱
-        code (int): 狀態/錯誤碼
+    判斷是否為成功碼（根據 SUCCESS_CODES）
     """
-    msg = ERROR_CODE_MSG_MAP.get(code, "未知狀態")
+    return code in SUCCESS_CODES
 
-    SUCCESS_CODES = {
-        ResultCode.SUCCESS,
-        ResultCode.TESTDATA_GENERATION_SUCCESS,
-    }
 
-    if code in SUCCESS_CODES:
-        print_info(f"【{step}】成功｜狀態碼：{code}｜說明：{msg}")
+def log_step(code: int, step: str, meta: Optional[dict] = None):
+    """
+    印出每個步驟的執行結果（成功 / 失敗）
+    - 若非成功碼會一併顯示錯誤訊息與附加資訊
+    """
+    if is_success_code(code):
+        print(f"[✅ 成功] 步驟：{step}")
     else:
-        print_error(f"【{step}】失敗｜狀態碼：{code}｜說明：{msg}")
+        message = ERROR_MESSAGES.get(code, "未知錯誤")
+        print(f"[❌ 失敗] 步驟：{step}")
+        print(f"   ⤷ 錯誤碼：{code} - {message}")
+        if meta:
+            print(f"   ⤷ 附加資訊：{meta}")

@@ -41,7 +41,7 @@ def get_json_field_from_response(response: requests.Response, field: str) -> Opt
     try:
         return response.json().get(field)
     except Exception:
-        return None
+        return ResultCode.SUCCESS
 
 @tool
 def get_data_field_from_response(response: requests.Response, key: str) -> Optional[Any]:
@@ -49,7 +49,7 @@ def get_data_field_from_response(response: requests.Response, key: str) -> Optio
     try:
         return response.json().get("data", {}).get(key)
     except Exception:
-        return None
+        return ResultCode.SUCCESS
 
 @tool
 def get_token_from_response(response: requests.Response) -> Optional[str]:
@@ -57,7 +57,7 @@ def get_token_from_response(response: requests.Response) -> Optional[str]:
     try:
         return response.json().get("data", {}).get("token")
     except Exception:
-        return None
+        return ResultCode.SUCCESS
 
 @tool
 def get_error_message_from_response(response: requests.Response) -> str:
