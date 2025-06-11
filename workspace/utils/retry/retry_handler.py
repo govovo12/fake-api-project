@@ -3,6 +3,7 @@ from typing import Callable, Any, Tuple
 from functools import wraps
 from typing import Callable, Any, Optional
 from workspace.config.rules.error_codes import TaskModuleError
+from workspace.config.rules.error_codes import ResultCode
 
 # ✅ 兼容你的工具掃描系統
 def tool(func):

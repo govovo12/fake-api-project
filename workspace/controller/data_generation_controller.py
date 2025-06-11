@@ -1,12 +1,8 @@
 from workspace.modules.fake_data.orchestrator.testdata_file_preparer import prepare_testdata_files
-from workspace.modules.fake_data.orchestrator.testdata_product_builder import build_product_data
-from workspace.modules.fake_data.orchestrator.testdata_product_writer import write_product_data
-from workspace.modules.fake_data.orchestrator.testdata_user_builder import build_user_data
-from workspace.modules.fake_data.orchestrator.testdata_user_writer import write_user_data
+from workspace.modules.fake_data.orchestrator.generate_and_write_data import generate_and_write_data
 from workspace.utils.logger.log_helper import log_step, is_success_code
 from workspace.utils.logger.trace_helper import print_trace
 from workspace.config.rules.error_codes import ResultCode
-
 
 def run_generate_testdata_flow(uuid: str) -> int:
     """
@@ -24,33 +20,17 @@ def run_generate_testdata_flow(uuid: str) -> int:
     if not is_success_code(code):
         return code
 
-    # Step 2: 建立商品測資
-    step = "generate_product_data"
-    code = build_product_data(uuid)
+    # Step 2: 建立並儲存商品測資
+    step = "generate_and_save_product_data"
+    code = generate_and_write_data("product", uuid)  # 呼叫生成並寫入商品資料的組合器
     log_step(code, step)
     print_trace(uuid, step)
     if not is_success_code(code):
         return code
 
-    # Step 3: 儲存商品測資
-    step = "save_product_data"
-    code = write_product_data(uuid)
-    log_step(code, step)
-    print_trace(uuid, step)
-    if not is_success_code(code):
-        return code
-
-    # Step 4: 建立使用者測資
-    step = "generate_user_data"
-    code = build_user_data(uuid)
-    log_step(code, step)
-    print_trace(uuid, step)
-    if not is_success_code(code):
-        return code
-
-    # Step 5: 儲存使用者測資
-    step = "save_user_data"
-    code = write_user_data(uuid)
+    # Step 3: 建立並儲存使用者測資
+    step = "generate_and_save_user_data"
+    code = generate_and_write_data("user", uuid)  # 呼叫生成並寫入使用者資料的組合器
     log_step(code, step)
     print_trace(uuid, step)
     if not is_success_code(code):

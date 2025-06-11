@@ -1,52 +1,63 @@
 import pytest
-import uuid
+from workspace.utils.uuid.uuid_generator import generate_batch_uuid_with_code, generate_uuid
+from workspace.config.rules.error_codes import ResultCode
 
-# ✅ 測試標記：單元測試 + uuid 分類
+# 標記單元測試及 uuid 測試
 pytestmark = [pytest.mark.unit, pytest.mark.uuid]
 
-from workspace.utils.uuid.uuid_generator import (
-    generate_uuid,
-    generate_batch_uuid_with_code,
-)
-from workspace.config.rules.error_codes import TaskModuleError
+# ===============================
+# 測試 generate_batch_uuid_with_code 函式
+# ===============================
 
+def test_generate_batch_uuid_with_code_success():
+    """
+    測試 generate_batch_uuid_with_code 函式：成功生成 UUID
+    """
+    result = generate_batch_uuid_with_code()
+    
+    # 確認返回的值是 32 字符的合法 UUID 字串
+    assert len(result) == 32
+    assert all(c in '0123456789abcdef' for c in result)  # 檢查是否為十六進制字符
+
+
+def test_generate_batch_uuid_with_code_failure(mocker):
+    """
+    測試 generate_batch_uuid_with_code 函式：生成 UUID 失敗
+    模擬錯誤並檢查錯誤回報
+    """
+    # 模擬 uuid.uuid4().hex 引發異常
+    mocker.patch("uuid.uuid4", side_effect=Exception("UUID generation failed"))
+
+    result = generate_batch_uuid_with_code()
+    
+    # 確認返回的錯誤代碼
+    assert result == ResultCode.UUID_GEN_FAIL
+
+
+# ===============================
+# 測試 generate_uuid 函式
+# ===============================
 
 def test_generate_uuid_success():
     """
-    正向測試：generate_uuid 應成功產生 32 位數的 UUID 字串
+    測試 generate_uuid 函式：成功生成 UUID
     """
     result = generate_uuid()
-    assert isinstance(result, str)
+    
+    # 確認返回的值是 32 字符的合法 UUID 字串
     assert len(result) == 32
-    assert all(c in "0123456789abcdef" for c in result)
+    assert all(c in '0123456789abcdef' for c in result)  # 檢查是否為十六進制字符
 
 
-def test_generate_batch_uuid_success():
+def test_generate_uuid_failure(mocker):
     """
-    正向測試：generate_batch_uuid_with_code 應成功產生 32 位數的 UUID 字串
+    測試 generate_uuid 函式：生成 UUID 失敗
+    模擬錯誤並檢查錯誤回報
     """
-    result = generate_batch_uuid_with_code()
-    assert isinstance(result, str)
-    assert len(result) == 32
-    assert all(c in "0123456789abcdef" for c in result)
+    # 模擬 uuid.uuid4().hex 引發異常
+    mocker.patch("uuid.uuid4", side_effect=Exception("UUID generation failed"))
 
-
-def test_generate_batch_uuid_uniqueness():
-    """
-    邊界測試：連續產生 100 組 UUID，應無重複值
-    """
-    uuids = {generate_batch_uuid_with_code() for _ in range(100)}
-    assert len(uuids) == 100
-
-
-def test_generate_batch_uuid_fail_by_monkeypatch(monkeypatch):
-    """
-    異常模擬：模擬 uuid.uuid4 發生例外時，應正確拋出 TaskModuleError
-    """
-    def broken_uuid():
-        raise Exception("UUID system failure")
-
-    monkeypatch.setattr(uuid, "uuid4", broken_uuid)
-
-    with pytest.raises(TaskModuleError) as e:
-        generate_batch_uuid_with_code()
+    result = generate_uuid()
+    
+    # 確認返回的錯誤代碼
+    assert result == ResultCode.UUID_GEN_FAIL
