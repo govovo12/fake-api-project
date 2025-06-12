@@ -1,10 +1,12 @@
 @echo off
+chcp 65001 > nul
 cd /d C:\Users\user\Desktop\fake-api-project
 
-REM 拉遠端並強制同步
+echo 🔄 Starting sync with remote...
+
 git fetch origin
 git clean -fd
 git reset --hard origin/main
 
-echo ✅ 已強制覆蓋拉取最新版本！
+echo ✅ Sync complete - local is now at origin/main
 pause
