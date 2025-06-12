@@ -1,41 +1,54 @@
-from typing import Dict, Any, Optional
-from faker import Faker
 import random
+import string
+from workspace.config.rules.error_codes import ResultCode
 
-from workspace.config.rules.error_codes import ResultCode, TaskModuleError
-from workspace.config.envs.fake_product_config import CATEGORIES, CATEGORY_IMAGES
+# 預設商品類別清單
+CATEGORY_LIST = [
+    "Clothes",
+    "Electronics",
+    "Jewelery",
+    "Men's Clothing",
+    "Women's Clothing"
+]
 
-fake = Faker()
-DEFAULT_IMAGE = "https://fakestoreapi.com/img/default.jpg"
-
-
-def generate_product_data(
-    title: Optional[str] = None,
-    price: Optional[float] = None,
-    category: Optional[str] = None
-) -> Dict[str, Any]:
+def generate_product_data(title=None, price=None, category=None, image=None):
     """
-    任務模組：產生假商品測試資料（符合 Fake Store API 建立商品 API 格式）
+    產生商品測試資料，並符合 Fake Store API 的要求。
+    隨機生成 description 和 image，並驗證格式是否正確。
     """
     try:
-        print(f"[DEBUG] CATEGORIES: {CATEGORIES}")  # 查看 CATEGORIES 的內容
-        if not CATEGORIES:
-            raise TaskModuleError(ResultCode.PRODUCT_CATEGORY_EMPTY)
+        # 每次都從類別清單中隨機選一個，不管外部有沒有傳 category
+        category = random.choice(CATEGORY_LIST)  # 隨機選擇一個 category
+        # ✅ 檢查選擇的 category 是否在 CATEGORY_LIST 內
+        if category not in CATEGORY_LIST:
+            return ResultCode.PRODUCT_CATEGORY_EMPTY  # 如果選擇的 category 不在清單內，返回錯誤碼
 
-        selected_category = category or random.choice(CATEGORIES)
-        print(f"[DEBUG] Selected Category: {selected_category}")  # 確認選擇的商品分類
+        # ✅ 檢查 price 是否為數字
+        if price is not None and not isinstance(price, (int, float)):
+            return ResultCode.PRODUCT_GENERATION_FAILED  # 如果 price 不是數字，返回錯誤碼
 
-        product_data = {
-            "title": title or fake.catch_phrase(),
-            "price": price if price is not None else round(random.uniform(5, 500), 2),
-            "category": selected_category
+        # 隨機生成 description（長度 5 至 10，字母 + 數字）
+        description = ''.join(random.choices(string.ascii_lowercase + string.digits, k=random.randint(5, 10)))
+
+        # 如果 description 不符合要求（例如長度不對），返回錯誤碼
+        if len(description) < 5 or len(description) > 10:
+            return ResultCode.PRODUCT_GENERATION_FAILED  # 如果 description 格式錯誤，返回錯誤碼
+
+        # 固定的圖片 URL
+        image = "https://fakeimg.pl/250x250/?text=Sample"
+
+        # 檢查 image 是否為空
+        if not image:
+            return ResultCode.PRODUCT_GENERATION_FAILED  # 如果 image 為空，返回錯誤碼
+
+        # 生成商品資料並返回
+        return {
+            "title": title or "Random Product",
+            "price": price or round(random.uniform(5.0, 500.0), 2),
+            "description": description,
+            "image": image,
+            "category": category
         }
 
-        # 打印生成的商品資料
-        print(f"[DEBUG] Generated product data: {product_data}")
-        return product_data
-
     except Exception:
-        raise TaskModuleError(ResultCode.PRODUCT_GENERATION_FAILED)
-
-
+        return ResultCode.PRODUCT_GENERATION_FAILED  # 發生其他錯誤時返回錯誤碼

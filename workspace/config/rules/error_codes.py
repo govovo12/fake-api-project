@@ -22,6 +22,14 @@ class ResultCode:
     TOOL_INVALID_FILE_DATA = 40020
     TOOL_TEMP_FILE_WRITE_FAILED = 40021
 
+    # ✅ 新增的錯誤碼（以 TOOL_ 開頭）
+    TOOL_USER_TESTDATA_FILE_WRITE_FAILED = 40022  # 自定義錯誤碼，測試資料檔案寫入失敗
+
+    # ✅ 任務模組錯誤碼（user_generator, product_generator）
+    PRODUCT_CATEGORY_EMPTY = 41001  # 商品類別為空
+    PRODUCT_GENERATION_FAILED = 41002  # 商品生成失敗
+    FAKER_GENERATE_FAILED = 42001  # 用戶資料生成失敗
+
     # ✅ 通用錯誤碼
     UUID_GEN_FAIL = 42003
     TOOL_FILE_NOT_FOUND = 42002
@@ -41,4 +49,8 @@ class ResultCode:
         TOOL_TEMP_FILE_WRITE_FAILED: "暫存檔寫入失敗",
         UUID_GEN_FAIL: "UUID 生成失敗",
         TOOL_FILE_NOT_FOUND: "檔案未找到",
+        TOOL_USER_TESTDATA_FILE_WRITE_FAILED: "測試資料檔案寫入失敗",  # 自定義錯誤碼的訊息
+        PRODUCT_CATEGORY_EMPTY: "商品類別為空",
+        PRODUCT_GENERATION_FAILED: "商品生成失敗",
+        FAKER_GENERATE_FAILED: "用戶資料生成失敗",
     }

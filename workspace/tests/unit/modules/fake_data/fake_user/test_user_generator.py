@@ -1,38 +1,41 @@
 import pytest
-from workspace.modules.fake_data.fake_user.user_generator import generate_user_data
+from modules.fake_data.fake_user.user_generator import generate_user_data
+from workspace.config.rules.error_codes import ResultCode
 
+# 測試標記
 pytestmark = [pytest.mark.unit, pytest.mark.fake_user]
-
 
 def test_generate_user_data_success():
     """
-    測試 generate_user_data 成功回傳資料的格式與內容
+    成功產生用戶資料，應回傳 dict 且欄位符合規則
     """
-    success, data, meta = generate_user_data()
-    assert success is True
-    assert meta is None
-    assert isinstance(data, dict)
-    assert "name" in data and isinstance(data["name"], str)
-    assert "email" in data and isinstance(data["email"], str)
-    assert "password" in data and isinstance(data["password"], str)
-    assert "passwordConfirm" in data and data["passwordConfirm"] == data["password"]
+    result = generate_user_data()
+    assert result != ResultCode.FAKER_GENERATE_FAILED
+    assert isinstance(result, dict)
+    assert "name" in result
+    assert "email" in result
+    assert "password" in result
+    assert 3 <= len(result["name"]) <= 50
+    assert len(result["email"]) <= 100
+    assert 8 <= len(result["password"]) <= 16
 
-
-def test_generate_user_data_handles_exception(monkeypatch):
+def test_generate_user_data_invalid_name():
     """
-    模擬 Faker 函式拋出例外，測試錯誤回傳
+    模擬錯誤 name（過短），應回傳 FAKER_GENERATE_FAILED
     """
-    def fake_name():
-        raise Exception("fake error")
+    result = generate_user_data(name="Yo")
+    assert result == ResultCode.FAKER_GENERATE_FAILED
 
-    monkeypatch.setattr(
-        "workspace.modules.fake_data.fake_user.user_generator.fake.name",
-        fake_name
-    )
+def test_generate_user_data_invalid_email():
+    """
+    模擬錯誤 email（格式錯誤），應回傳 FAKER_GENERATE_FAILED
+    """
+    result = generate_user_data(email="invalid-email.com")
+    assert result == ResultCode.FAKER_GENERATE_FAILED
 
-    success, data, meta = generate_user_data()
-    assert success is False
-    assert data is None
-    assert meta is not None
-    assert meta.get("reason") == "user_generator_faker_failed" or meta.get("reason") == "faker_error"
-    assert "fake error" in meta.get("message", "")
+def test_generate_user_data_invalid_password():
+    """
+    模擬錯誤 password（過短），應回傳 FAKER_GENERATE_FAILED
+    """
+    result = generate_user_data(password="123")
+    assert result == ResultCode.FAKER_GENERATE_FAILED
