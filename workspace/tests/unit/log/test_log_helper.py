@@ -1,35 +1,49 @@
 import pytest
-from workspace.utils.logger.log_helper import log_step
+from io import StringIO
+from contextlib import redirect_stdout
+from workspace.utils.logger.log_helper import log_simple_result
+from workspace.config.rules.error_codes import ResultCode
 
 pytestmark = [pytest.mark.unit, pytest.mark.log]
 
-def test_log_step_success(capfd):
+def capture_output(func, *args, **kwargs):
     """
-    測試 log_step 輸出成功訊息
+    捕捉 print 輸出的輔助函式
     """
-    log_step("測試步驟", 0)
-    out, err = capfd.readouterr()
-    assert "【測試步驟】成功" in out
-    assert "狀態碼：0" in out
-    assert "說明：" in out
+    buffer = StringIO()
+    with redirect_stdout(buffer):
+        func(*args, **kwargs)
+    return buffer.getvalue().strip()
 
-def test_log_step_fail(capfd):
+def test_log_simple_result_success_code_0():
     """
-    測試 log_step 輸出失敗訊息
+    測試成功碼 SUCCESS（0）應輸出對應成功訊息
     """
-    log_step("測試步驟", 99999)
-    out, err = capfd.readouterr()
-    assert "【測試步驟】失敗" in out
-    assert "狀態碼：99999" in out
-    assert "說明：" in out or "未知狀態" in out
+    output = capture_output(log_simple_result, ResultCode.SUCCESS)
+    assert "✅ 成功" in output
+    assert "(code=0, msg=操作成功)" in output
 
-def test_log_step_custom_code(capfd):
+def test_log_simple_result_success_code_10000():
     """
-    測試 log_step 對已知錯誤碼的對應說明
+    測試成功碼 TASK_USER_TESTDATA_GENERATED（10000）應輸出對應訊息
     """
-    from workspace.config.rules.error_codes import ERROR_CODE_MSG_MAP
-    custom_code = next(iter(ERROR_CODE_MSG_MAP))
-    log_step("自訂步驟", custom_code)
-    out, err = capfd.readouterr()
-    assert f"狀態碼：{custom_code}" in out
-    assert ERROR_CODE_MSG_MAP[custom_code] in out
+    output = capture_output(log_simple_result, ResultCode.TESTDATA_TASK_SUCCESS)
+    assert "✅ 成功" in output
+    assert f"(code=10000, msg={ResultCode.ERROR_MESSAGES[ResultCode.TESTDATA_TASK_SUCCESS]})" in output
+
+
+def test_log_simple_result_failure_known_error():
+    """
+    測試已知錯誤碼應正確顯示失敗訊息
+    """
+    output = capture_output(log_simple_result, ResultCode.TOOL_FILE_WRITE_FAILED)
+    assert "❌ 失敗" in output
+    assert f"(code={ResultCode.TOOL_FILE_WRITE_FAILED}, msg={ResultCode.ERROR_MESSAGES[ResultCode.TOOL_FILE_WRITE_FAILED]})" in output
+
+def test_log_simple_result_failure_unknown_error():
+    """
+    測試未知錯誤碼應顯示「未知錯誤」
+    """
+    output = capture_output(log_simple_result, 99999)
+    assert "❌ 失敗" in output
+    assert "(code=99999, msg=未知錯誤)" in output

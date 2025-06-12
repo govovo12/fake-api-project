@@ -35,7 +35,9 @@ def generate_product_data(title=None, price=None, category=None, image=None):
             return ResultCode.PRODUCT_GENERATION_FAILED  # 如果 description 格式錯誤，返回錯誤碼
 
         # 固定的圖片 URL
-        image = "https://fakeimg.pl/250x250/?text=Sample"
+        image = "https://fakeimg.pl/250x250/?text=Sample" if image is None else image
+
+
 
         # 檢查 image 是否為空
         if not image:

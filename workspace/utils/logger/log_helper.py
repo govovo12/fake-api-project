@@ -1,25 +1,19 @@
 from typing import Optional
+from pathlib import Path
+from workspace.config.rules.error_codes import ResultCode
 
-from workspace.config.rules.error_codes import SUCCESS_CODES, ERROR_MESSAGES
+# ✅ 工具函式標記（供 tools_table 掃描用）
+def tool(func):
+    """自製工具標記（供自動掃描工具表用）"""
+    func.is_tool = True
+    return func
 
-
-def is_success_code(code: int) -> bool:
+@tool
+def log_simple_result(code: int):
     """
-    判斷是否為成功碼（根據 SUCCESS_CODES）
+    [TOOL] 印出結果格式： (code=xxx, msg=XXX)
+    支援成功碼與錯誤碼。
     """
-    return code in SUCCESS_CODES
-
-
-def log_step(code: int, step: str, meta: Optional[dict] = None):
-    """
-    印出每個步驟的執行結果（成功 / 失敗）
-    - 若非成功碼會一併顯示錯誤訊息與附加資訊
-    """
-    if is_success_code(code):
-        print(f"[✅ 成功] 步驟：{step}")
-    else:
-        message = ERROR_MESSAGES.get(code, "未知錯誤")
-        print(f"[❌ 失敗] 步驟：{step}")
-        print(f"   ⤷ 錯誤碼：{code} - {message}")
-        if meta:
-            print(f"   ⤷ 附加資訊：{meta}")
+    msg = ResultCode.ERROR_MESSAGES.get(code, "未知錯誤")
+    status = "✅ 成功" if ResultCode.is_success(code) else "❌ 失敗"
+    print(f"[{status}] (code={code}, msg={msg})")

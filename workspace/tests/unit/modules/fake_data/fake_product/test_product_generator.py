@@ -48,24 +48,20 @@ def test_generate_product_data_category_empty():
 
 def test_generate_product_data_invalid_image_empty():
     """
-    測試當 image 為空時，應返回錯誤碼 PRODUCT_GENERATION_FAILED
+    測試當 image 為空值時，應返回錯誤碼 PRODUCT_GENERATION_FAILED
     """
-    # 模擬 image 為空
-    result = generate_product_data(title="Sample Product", price=199.99, category="electronics")
-    
-    # 強制將 image 設為空
-    result["image"] = ""  # 強制將 image 設為空
-    
-    # 檢查是否返回錯誤碼
+    result = generate_product_data(title="Sample Product", price=199.99, image="")
     assert result == ResultCode.PRODUCT_GENERATION_FAILED
+
 
 
 def test_generate_product_data_invalid_description():
     """
-    測試當 description 格式不正確（長度不符）時，應返回錯誤碼
+    測試當 description 長度不符（例如長度 <5 或 >10）時，應返回錯誤碼
     """
-    # 模擬生成的 description 長度不符
-    result = generate_product_data(title="Sample Product", price=199.99)
-    
-    # 如果 description 長度小於 5 或大於 10，應該返回錯誤碼
-    assert result == ResultCode.PRODUCT_GENERATION_FAILED
+    # 模擬 description 長度為 3（非法）
+    with patch("modules.fake_data.fake_product.product_generator.random.choices", return_value=list("abc")):
+        result = generate_product_data(title="Sample Product", price=199.99)
+
+        # 應該回傳錯誤碼，因為 description 長度為 3
+        assert result == ResultCode.PRODUCT_GENERATION_FAILED

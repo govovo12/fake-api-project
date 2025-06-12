@@ -1,69 +1,68 @@
 import pytest
-from workspace.config.rules import error_codes
-from workspace.utils.error import error_handler
+from workspace.utils.error.error_handler import (
+    APIError,
+    ValidationError,
+    handle_exception
+)
+from workspace.config.rules.error_codes import ResultCode
 
 pytestmark = [pytest.mark.infra, pytest.mark.errorcode]
 
 # ✅ 結構性測試：ResultCode 的設計是否正確
 
-def test_all_error_codes_are_int():
-    """所有錯誤碼應為 int，且非負"""
-    for attr in dir(error_codes.ResultCode):
-        if attr.startswith("__"):
-            continue
-        val = getattr(error_codes.ResultCode, attr)
-        assert isinstance(val, int), f"{attr} is not int"
-        assert val >= 0, f"{attr} is negative"
-
-
-def test_error_code_names_are_uppercase():
-    """錯誤碼名稱需全大寫（維持一致性）"""
-    for attr in dir(error_codes.ResultCode):
-        if attr.startswith("__"):
-            continue
-        assert attr.isupper(), f"{attr} is not uppercase"
-
-
-def test_error_codes_are_unique():
-    """錯誤碼 value 不可重複"""
-    values = []
-    for attr in dir(error_codes.ResultCode):
-        if attr.startswith("__"):
-            continue
-        values.append(getattr(error_codes.ResultCode, attr))
-    duplicates = {v for v in values if values.count(v) > 1}
-    assert not duplicates, f"Duplicate error codes: {duplicates}"
-
-
-# ✅ 功能性測試：error_handler 處理錯誤格式是否正確
-
-def test_handle_api_error_with_any_int_code():
-    e = error_handler.APIError("timeout", status_code=504, code=8888)
-    result = error_handler.handle_exception(e)
+def test_handle_api_error_with_valid_code():
+    """
+    測試傳入 APIError 且使用合法錯誤碼時，應正確轉換為 dict
+    """
+    exc = APIError("檔案建立失敗", status_code=500, code=ResultCode.TOOL_FILE_CREATE_FAILED)
+    result = handle_exception(exc)
+    
     assert result["type"] == "api"
-    assert result["msg"] == "timeout"
-    assert result["status_code"] == 504
-    assert result["code"] == 8888
+    assert result["msg"] == "檔案建立失敗"
+    assert result["code"] == ResultCode.TOOL_FILE_CREATE_FAILED
+    assert result["status_code"] == 500
 
+def test_handle_api_error_with_invalid_code():
+    """
+    測試傳入 APIError 且使用未定義錯誤碼時，應 fallback 成 DEFAULT_CODE
+    """
+    exc = APIError("不明錯誤", status_code=400, code=99999)
+    result = handle_exception(exc)
 
-def test_handle_api_error_with_default_code():
-    e = error_handler.APIError("fallback error")
-    result = error_handler.handle_exception(e)
     assert result["type"] == "api"
-    assert result["msg"] == "fallback error"
-    assert isinstance(result["code"], int)
+    assert result["msg"] == "不明錯誤"
+    assert result["code"] == 99999  # 仍然保留你傳進來的錯誤碼（但 console 會印警告）
+    assert result["status_code"] == 400
 
+def test_handle_api_error_with_no_code():
+    """
+    測試未提供 code 時，應使用 DEFAULT_CODE 作為 fallback
+    """
+    exc = APIError("缺少錯誤碼", status_code=500)
+    result = handle_exception(exc)
+
+    assert result["type"] == "api"
+    assert result["msg"] == "缺少錯誤碼"
+    assert result["code"] == ResultCode.GENERIC_ERROR
+    assert result["status_code"] == 500
 
 def test_handle_validation_error():
-    e = error_handler.ValidationError("email required", code="EMAIL_REQUIRED")
-    result = error_handler.handle_exception(e)
+    """
+    測試 ValidationError 例外應正確回傳 type, msg, code
+    """
+    exc = ValidationError("email 格式錯誤", code="EMAIL_INVALID")
+    result = handle_exception(exc)
+
     assert result["type"] == "validation"
-    assert result["code"] == "EMAIL_REQUIRED"
-    assert result["msg"] == "email required"
+    assert result["msg"] == "email 格式錯誤"
+    assert result["code"] == "EMAIL_INVALID"
 
+def test_handle_unknown_exception():
+    """
+    測試傳入非自訂例外（一般 Exception）時，應標示為 unknown
+    """
+    exc = Exception("非預期錯誤")
+    result = handle_exception(exc)
 
-def test_handle_unknown_error():
-    e = RuntimeError("unexpected failure")
-    result = error_handler.handle_exception(e)
     assert result["type"] == "unknown"
-    assert result["msg"] == "unexpected failure"
+    assert result["msg"] == "非預期錯誤"

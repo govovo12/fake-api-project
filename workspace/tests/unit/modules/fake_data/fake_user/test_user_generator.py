@@ -2,7 +2,6 @@ import pytest
 from modules.fake_data.fake_user.user_generator import generate_user_data
 from workspace.config.rules.error_codes import ResultCode
 
-# 測試標記
 pytestmark = [pytest.mark.unit, pytest.mark.fake_user]
 
 def test_generate_user_data_success():
@@ -12,18 +11,18 @@ def test_generate_user_data_success():
     result = generate_user_data()
     assert result != ResultCode.FAKER_GENERATE_FAILED
     assert isinstance(result, dict)
-    assert "name" in result
+    assert "username" in result
     assert "email" in result
     assert "password" in result
-    assert 3 <= len(result["name"]) <= 50
+    assert 3 <= len(result["username"]) <= 50
     assert len(result["email"]) <= 100
     assert 8 <= len(result["password"]) <= 16
 
-def test_generate_user_data_invalid_name():
+def test_generate_user_data_invalid_username():
     """
-    模擬錯誤 name（過短），應回傳 FAKER_GENERATE_FAILED
+    模擬錯誤 username（過短），應回傳 FAKER_GENERATE_FAILED
     """
-    result = generate_user_data(name="Yo")
+    result = generate_user_data(username="Yo")
     assert result == ResultCode.FAKER_GENERATE_FAILED
 
 def test_generate_user_data_invalid_email():

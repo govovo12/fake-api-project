@@ -1,41 +1,33 @@
-from workspace.modules.fake_data.orchestrator.testdata_file_preparer import prepare_testdata_files
-from workspace.modules.fake_data.orchestrator.generate_and_write_data import generate_and_write_data
-from workspace.utils.logger.log_helper import log_step, is_success_code
 from workspace.utils.logger.trace_helper import print_trace
+from workspace.utils.logger.log_helper import log_simple_result
+from workspace.modules.fake_data.orchestrator.build_user_data_and_write import build_user_data_and_write
+from workspace.modules.fake_data.orchestrator.build_product_data_and_write import build_product_data_and_write
 from workspace.config.rules.error_codes import ResultCode
 
-def run_generate_testdata_flow(uuid: str) -> int:
+
+def generate_user_and_product_data(uuid: str) -> int:
     """
-    測資產生子控制器，依序處理測資任務流程
-    僅回傳最終錯誤碼，並統一透過 log_helper 印出狀態
+    子控制器：根據 uuid 產生 user 與 product 測資，負責 log 與錯誤碼轉譯。
+    - 印出 trace log
+    - 呼叫兩個組合器
+    - 回傳測資任務成功 or 中斷錯誤碼
     """
-    print("\n[DEBUG] 開始執行 run_generate_testdata_flow()...\n")
-    print("🔹 UUID:", uuid)
+    # 印出 trace（方便 debug）
+    print_trace(f"UUID: {uuid}")  # ✅ 傳一個 str 給 step 參數即可
 
-    # Step 1: 建立空檔案
-    step = "create_empty_files"
-    code = prepare_testdata_files(uuid)
-    log_step(code, step)
-    print_trace(uuid, step)
-    if not is_success_code(code):
+    # 呼叫 user 組合器
+    code = build_user_data_and_write(uuid)
+    log_simple_result(code)
+    if code != ResultCode.SUCCESS:
         return code
 
-    # Step 2: 建立並儲存商品測資
-    step = "generate_and_save_product_data"
-    code = generate_and_write_data("product", uuid)  # 呼叫生成並寫入商品資料的組合器
-    log_step(code, step)
-    print_trace(uuid, step)
-    if not is_success_code(code):
+    # 呼叫 product 組合器
+    code = build_product_data_and_write(uuid)
+    log_simple_result(code)
+    if code != ResultCode.SUCCESS:
         return code
 
-    # Step 3: 建立並儲存使用者測資
-    step = "generate_and_save_user_data"
-    code = generate_and_write_data("user", uuid)  # 呼叫生成並寫入使用者資料的組合器
-    log_step(code, step)
-    print_trace(uuid, step)
-    if not is_success_code(code):
-        return code
-
-    # ✅ 全部成功
-    print(f"\n✅ 測資產生流程完成，UUID: {uuid}")
-    return ResultCode.TESTDATA_GENERATION_SUCCESS
+    # 若皆成功，印成功訊息
+    log_simple_result(ResultCode.TESTDATA_TASK_SUCCESS)
+    print(f"✅ 測資產生流程完成，UUID: {uuid}")
+    return ResultCode.TESTDATA_TASK_SUCCESS

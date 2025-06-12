@@ -1,13 +1,12 @@
 from pathlib import Path
 from workspace.utils.env.env_manager import EnvManager
 
-# Fake-API 專案根目錄 (config 同層往上兩層)
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+# === 基礎路徑定義 ===
 
-# workspace 根目錄
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 WORKSPACE_ROOT = PROJECT_ROOT / "workspace"
 
-# 各主要 utils 模組資料夾
+# === utils 模組資料夾 ===
 UTILS_ROOT = WORKSPACE_ROOT / "utils"
 LOGGER_ROOT = UTILS_ROOT / "logger"
 NOTIFIER_ROOT = UTILS_ROOT / "notifier"
@@ -27,68 +26,68 @@ DATA_ROOT = UTILS_ROOT / "data"
 UUID_ROOT = UTILS_ROOT / "uuid"
 UUID_GENERATOR_PATH = UUID_ROOT / "uuid_generator.py"
 
-# 任務模組資料夾
-TASKS_ROOT = WORKSPACE_ROOT / "modules" / "tasks"  # 建議存放控制器、任務模組
+# === 任務模組資料夾 ===
+TASKS_ROOT = WORKSPACE_ROOT / "modules" / "tasks"
 
-# 測試資料（testdata）資料夾
+# === 測試資料夾 (testdata) ===
 TESTDATA_ROOT = WORKSPACE_ROOT / "testdata"
-USER_TESTDATA_ROOT = TESTDATA_ROOT / "user"
-PRODUCT_TESTDATA_ROOT = TESTDATA_ROOT / "product"
-ORDER_TESTDATA_ROOT = TESTDATA_ROOT / "order"        # 可預留
-CART_TESTDATA_ROOT = TESTDATA_ROOT / "cart"          # 可預留
 
+USER_TESTDATA_DIR = TESTDATA_ROOT / "user"
+PRODUCT_TESTDATA_DIR = TESTDATA_ROOT / "product"
+ORDER_TESTDATA_DIR = TESTDATA_ROOT / "order"      # 可預留
+CART_TESTDATA_DIR = TESTDATA_ROOT / "cart"        # 可預留
+
+# ✅ 測資檔案路徑（依 uuid 命名）
+def get_user_path(uuid: str) -> Path:
+    """根據 UUID 取得 user 測資 JSON 路徑"""
+    return USER_TESTDATA_DIR / f"{uuid}.json"
+
+def get_product_path(uuid: str) -> Path:
+    """根據 UUID 取得 product 測資 JSON 路徑"""
+    return PRODUCT_TESTDATA_DIR / f"{uuid}.json"
+
+# ✅ 直接指定檔名（額外載入特定檔案）
 def get_user_testdata_path(filename: str) -> Path:
-    return USER_TESTDATA_ROOT / filename
+    return USER_TESTDATA_DIR / filename
 
 def get_product_testdata_path(filename: str) -> Path:
-    return PRODUCT_TESTDATA_ROOT / filename
+    return PRODUCT_TESTDATA_DIR / filename
 
-def get_order_testdata_path(filename: str) -> Path:
-    return ORDER_TESTDATA_ROOT / filename
-
-def get_cart_testdata_path(filename: str) -> Path:
-    return CART_TESTDATA_ROOT / filename
-
-# config 路徑
+# === config 路徑 ===
 CONFIG_ROOT = WORKSPACE_ROOT / "config"
 ENVS_CONFIG_ROOT = CONFIG_ROOT / "envs"
+
 FAKE_PRODUCT_CONFIG_PATH = ENVS_CONFIG_ROOT / "fake_product_config.py"
-FAKE_USER_CONFIG_PATH = ENVS_CONFIG_ROOT / "fake_user_config.py"  # 未來有 user config 可預留
+FAKE_USER_CONFIG_PATH = ENVS_CONFIG_ROOT / "fake_user_config.py"
 LOGIN_ENV_PATH = ENVS_CONFIG_ROOT / "api.env"
 
 def get_env_config_path(filename: str) -> Path:
-    """取得 envs 目錄下的設定檔完整路徑"""
     return ENVS_CONFIG_ROOT / filename
 
-# 測試資料夾
+# === 測試模組 ===
 TESTS_ROOT = WORKSPACE_ROOT / "tests"
 UNIT_TESTS_ROOT = TESTS_ROOT / "unit"
 INTEGRATION_TESTS_ROOT = TESTS_ROOT / "integration"
 
-# 日誌與暫存資料夾
+# === 日誌與暫存區 ===
 LOGS_ROOT = PROJECT_ROOT / "logs"
 TMP_ROOT = PROJECT_ROOT / "tmp"
-
-# log 檔案路徑，conftest.py 會 patch 它
 LOG_PATH = WORKSPACE_ROOT / "reports" / "run_log.txt"
 
-# 取得指定模組的工具檔案路徑（例如 utils/logger）
+# === 模組路徑查詢工具 ===
 def get_module_path(mod_name: str) -> Path:
     return UTILS_ROOT / mod_name
 
-# 取得指定任務模組路徑（例如 task_login.py）
 def get_task_module_path(task_name: str) -> Path:
     return TASKS_ROOT / f"{task_name}.py"
 
-# 取得單元測試資料夾下模組路徑（方便統一管理）
 def get_unit_test_path(module: str) -> Path:
     return UNIT_TESTS_ROOT / module
 
-# 取得整合測試資料夾下模組路徑
 def get_integration_test_path(module: str) -> Path:
     return INTEGRATION_TESTS_ROOT / module
 
-# ✅ API 端點設定（由 api.env 提供）
+# ✅ API 端點（從 env 載入）
 API_ENV_PATH = get_env_config_path("api.env")
 _api_env = EnvManager.load_env_dict(API_ENV_PATH)
 
