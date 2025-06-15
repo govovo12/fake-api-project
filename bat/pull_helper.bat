@@ -8,8 +8,8 @@ for /f %%i in ('git branch --show-current') do set CUR_BRANCH=%%i
 git fetch origin
 git reset --hard origin/%CUR_BRANCH%
 
-:: 刪除未追蹤的檔案與資料夾（包括 venv）
-git clean -fd
+:: 刪除所有未追蹤檔案（包括被 gitignore 的）
+git clean -fdx
 
 echo ✅ Reset complete - project is now synced with origin/%CUR_BRANCH%
 pause
