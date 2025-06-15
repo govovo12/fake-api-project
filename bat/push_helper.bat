@@ -8,6 +8,6 @@ REM 匯出目前虛擬環境套件列表
 pip freeze > requirements.txt
 
 REM 執行專案根目錄的 Python 工具腳本
-python finalize_helper.py
+python push_helper.py
 
 pause
