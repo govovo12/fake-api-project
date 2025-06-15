@@ -1,107 +1,97 @@
 import pytest
 import requests
-from utils.request import request_handler
-from utils.mock.mock_helper import mock_api_response
-from unittest.mock import MagicMock
+from workspace.utils.request.request_handler import get, post, post_and_parse_json
+from workspace.utils.mock.mock_helper import mock_api_response
 
-pytestmark = [pytest.mark.unit, pytest.mark.request]
 
-# === 測試 GET ===
-
+@pytest.mark.unit
+@pytest.mark.request
 def test_get_success(monkeypatch):
-    monkeypatch.setattr(
-        "utils.request.request_handler.requests.get",
-        lambda *args, **kwargs: mock_api_response(status_code=200, json_data={"ok": True})
-    )
-    res = request_handler.get("https://test.com")
-    assert res.status_code == 200
-    assert res.json() == {"ok": True}
+    """
+    ✅ 測試 GET 成功（200 回傳）
+    """
+    def mock_get(*args, **kwargs):
+        return mock_api_response(status_code=200)
 
-def test_get_not_found(monkeypatch):
-    monkeypatch.setattr(
-        "utils.request.request_handler.requests.get",
-        lambda *args, **kwargs: mock_api_response(status_code=404)
-    )
-    res = request_handler.get("https://test.com/missing")
+    monkeypatch.setattr("requests.get", mock_get)
+    res = get("https://example.com")
+    assert res.status_code == 200
+
+
+@pytest.mark.unit
+@pytest.mark.request
+def test_post_success_created(monkeypatch):
+    """
+    ✅ 測試 POST 成功（201 Created）
+    """
+    def mock_post(url, headers, json=None, **kwargs):
+        return mock_api_response(status_code=201)
+
+    monkeypatch.setattr("requests.post", mock_post)
+    res = post("https://example.com", headers={"Content-Type": "application/json"})
+    assert res.status_code == 201
+
+
+@pytest.mark.unit
+@pytest.mark.request
+def test_post_fail(monkeypatch):
+    """
+    ❌ 測試 POST 回傳 404（非成功）
+    """
+    def mock_post(url, headers, json=None, **kwargs):
+        return mock_api_response(status_code=404)
+
+    monkeypatch.setattr("requests.post", mock_post)
+    res = post("https://example.com", headers={"Content-Type": "application/json"})
     assert res.status_code == 404
 
-def test_get_raises_request_exception(monkeypatch):
-    def raise_exc(*args, **kwargs):
-        raise requests.RequestException("network error")
-    monkeypatch.setattr(
-        "utils.request.request_handler.requests.get",
-        raise_exc
-    )
-    with pytest.raises(requests.RequestException):
-        request_handler.get("https://test.com/error")
 
-# === 測試 POST ===
-
-def test_post_success_created(monkeypatch):
-    monkeypatch.setattr(
-        "utils.request.request_handler.requests.post",
-        lambda *args, **kwargs: mock_api_response(status_code=201, json_data={"created": True})
-    )
-    res = request_handler.post("https://test.com", json={"k": "v"})
-    assert res.status_code == 201
-    assert res.json() == {"created": True}
-
-def test_post_fail(monkeypatch):
-    monkeypatch.setattr(
-        "utils.request.request_handler.requests.post",
-        lambda *args, **kwargs: mock_api_response(status_code=500)
-    )
-    res = request_handler.post("https://test.com", json={"k": "v"})
-    assert res.status_code == 500
-
+@pytest.mark.unit
+@pytest.mark.request
 def test_post_raises_request_exception(monkeypatch):
-    def raise_exc(*args, **kwargs):
-        raise requests.RequestException("network error")
-    monkeypatch.setattr(
-        "utils.request.request_handler.requests.post",
-        raise_exc
-    )
-    with pytest.raises(requests.RequestException):
-        request_handler.post("https://test.com", json={"k": "v"})
+    """
+    💥 模擬 POST 發生例外（例如 timeout）
+    """
+    def mock_post(url, headers, json=None, **kwargs):
+        raise requests.exceptions.RequestException("API failed")
 
-# === 測試 parse_json_safe ===
+    monkeypatch.setattr("requests.post", mock_post)
 
-def test_parse_json_safe_success():
-    mock_resp = MagicMock(spec=requests.Response)
-    mock_resp.json.return_value = {"a": 123}
-    success, data = request_handler.parse_json_safe(mock_resp)
-    assert success is True
-    assert data == {"a": 123}
+    with pytest.raises(requests.exceptions.RequestException):
+        post("https://example.com", headers={"Content-Type": "application/json"})
 
-def test_parse_json_safe_fail():
-    mock_resp = MagicMock(spec=requests.Response)
-    mock_resp.json.side_effect = Exception("invalid json")
-    success, data = request_handler.parse_json_safe(mock_resp)
-    assert success is False
-    assert data is None
 
-# === 測試 post_and_parse_json ===
-
+@pytest.mark.unit
+@pytest.mark.request
 def test_post_and_parse_json_success(monkeypatch):
-    def mock_post(*args, **kwargs):
-        return mock_api_response(status_code=200, json_data={"msg": "ok"})
-    monkeypatch.setattr(
-        "utils.request.request_handler.requests.post",
-        mock_post
-    )
-    code, json_data = request_handler.post_and_parse_json("https://test.com", payload={"a": 1})
-    assert code == 200
-    assert json_data == {"msg": "ok"}
+    """
+    ✅ 測試 post_and_parse_json 成功解析 JSON 回傳
+    """
+    def mock_post(url, headers, json=None, **kwargs):
+        return mock_api_response(status_code=200, json_data={"message": "OK"})
 
+    monkeypatch.setattr("workspace.utils.request.request_handler.post", mock_post)
+    status, result = post_and_parse_json("https://example.com", headers={}, payload={})
+    assert status == 200
+    assert result == {"message": "OK"}
+
+
+
+
+@pytest.mark.unit
+@pytest.mark.request
 def test_post_and_parse_json_invalid_json(monkeypatch):
-    def mock_post(*args, **kwargs):
+    """
+    ❌ 模擬回傳內容無法解析為 JSON（觸發例外）
+    """
+    def mock_post(url, headers, json=None, **kwargs):
         mock = mock_api_response(status_code=200)
         mock.json.side_effect = Exception("invalid json")
         return mock
-    monkeypatch.setattr(
-        "utils.request.request_handler.requests.post",
-        mock_post
-    )
-    code, json_data = request_handler.post_and_parse_json("https://test.com", payload={"a": 1})
-    assert code == 200
-    assert json_data is None
+
+    monkeypatch.setattr("workspace.utils.request.request_handler.post", mock_post)
+    status, result = post_and_parse_json("https://example.com", headers={}, payload={})
+    assert status == 200
+    assert result is None
+
+

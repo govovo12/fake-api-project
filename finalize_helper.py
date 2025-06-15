@@ -1,29 +1,29 @@
+import os
 import subprocess
 
-def run(cmd):
-    return subprocess.check_output(cmd, shell=True, encoding='utf-8').strip()
+def get_current_branch():
+    result = subprocess.run(["git", "branch", "--show-current"], capture_output=True, text=True)
+    return result.stdout.strip()
 
-def main():
-    print("📌 當前 Git 分支：")
-    current_branch = run("git branch --show-current")
-    print(f"➡️ 目前在：{current_branch}")
+def prompt_input(prompt_msg, default):
+    user_input = input(f"{prompt_msg} (預設: {default}) ➤ ").strip()
+    return user_input if user_input else default
 
-    # 分支切換
-    target_branch = input("🔀 請輸入要切換的分支（預設=main）：").strip() or "main"
-    run(f"git checkout {target_branch}")
+def finalize_and_force_push():
+    current_branch = get_current_branch()
+    print(f"\n🧠 當前分支為：{current_branch}")
 
-    # Commit 訊息
-    commit_msg = input("📝 請輸入 commit 訊息：").strip()
-    if not commit_msg:
-        print("❌ commit 訊息不可為空")
-        return
+    commit_msg = prompt_input("請輸入 Commit 訊息", "自動收尾")
+    remote_branch = prompt_input("請輸入要覆蓋的遠端分支", "main")
 
-    # 執行 Git 操作
-    run("git add .")
-    run(f'git commit -m "{commit_msg}"')
-    run(f"git push origin {target_branch} --force")
+    print("\n🔧 開始執行收尾操作...\n")
 
-    print(f"✅ 成功推送到 {target_branch}（已覆蓋遠端）")
+    os.system("git add .")
+    os.system(f"git commit -m \"{commit_msg}\"")
+    os.system(f"git pull origin {remote_branch} --rebase")
+    os.system(f"git push origin HEAD:{remote_branch} --force")
+
+    print(f"\n✅ 已強制推送至遠端分支：{remote_branch}")
 
 if __name__ == "__main__":
-    main()
+    finalize_and_force_push()

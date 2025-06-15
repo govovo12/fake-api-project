@@ -55,11 +55,12 @@ def get_data_field_from_response(response: requests.Response, key: str) -> Optio
 
 @tool
 def get_token_from_response(response: requests.Response) -> Optional[str]:
-    """擷取 JSON 的 data.token 欄位，若解析失敗回 None"""
+    """擷取 JSON 的 token 欄位，若解析失敗回 None"""
     try:
-        return response.json().get("data", {}).get("token")
+        return response.json().get("token")  
     except Exception:
         return None
+
 
 @tool
 def get_error_message_from_response(response: requests.Response) -> str:

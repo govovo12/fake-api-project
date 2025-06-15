@@ -54,3 +54,14 @@ def save_json(path: Path, data: dict) -> int:
 
     except Exception:
         return ResultCode.TOOL_FILE_WRITE_FAILED  # 返回錯誤碼
+
+@tool
+def extract_fields_from_dict(data: dict, keys: list) -> dict:
+    """
+    [TOOL] 從 dict 中擷取指定欄位，回傳子 dict。
+    - 缺漏欄位不報錯，僅略過
+    - 若輸入非 dict 則回空 dict
+    """
+    if not isinstance(data, dict):
+        return {}
+    return {k: data[k] for k in keys if k in data}

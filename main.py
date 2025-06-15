@@ -1,77 +1,41 @@
-import argparse
-import importlib.util
-import os
 import sys
 from pathlib import Path
-from types import ModuleType
 
-# === 基本參數設定 ===
-WORKSPACE_DIR = Path(__file__).parent / "workspace"
-DEFAULT_SCAN_DIRS = [
-    WORKSPACE_DIR / "scripts",
-    WORKSPACE_DIR / "controller",
-]
+# ➤ 設定匯入基底路徑
+BASE_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(BASE_DIR))
 
-# === 掃描任務模組 ===
-def scan_task_modules(scan_dirs):
-    task_map = {}
-    for directory in scan_dirs:
-        for file in directory.rglob("*.py"):
-            if file.name.startswith("_"):
-                continue
-            module_path = file.relative_to(WORKSPACE_DIR).with_suffix("").as_posix().replace("/", ".")
-            spec = importlib.util.spec_from_file_location(module_path, file)
-            try:
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)  # type: ignore
-                if hasattr(module, "__task_info__"):
-                    task_name = module.__task_info__["task"]
-                    task_map[task_name] = {
-                        "module_path": module_path,
-                        "entry": module.__task_info__.get("entry", "run"),
-                        "module": module,
-                    }
-            except Exception as e:
-                print(f"⚠️ 載入失敗：{file}，錯誤：{e}")
-    return task_map
-
-# === 執行指定任務 ===
-def run_task(task_name, task_map):
-    task = task_map.get(task_name)
-    if not task:
-        print(f"❌ 找不到任務：{task_name}\n")
-        print("✅ 可用任務如下：")
-        for name, info in task_map.items():
-            print(f" - {name}（from {info['module_path']}）")
-        return
-
-    module = task["module"]
-    entry = getattr(module, task["entry"], None)
-    if not entry:
-        print(f"❌ 無法在模組中找到對應入口函式：{task['entry']}")
-        return
-
-    print(f"📦 載入任務模組：{task['module_path']}")
-    print(f"✅ 執行任務：{task_name}（{task['entry']}）")
-    print("[DEBUG] 開始執行 run()...\n")
-    try:
-        entry()
-    except Exception as e:
-        print(f"❌ 任務執行時發生錯誤：{e}")
-
-# === 主程式 ===
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--task", help="指定要執行的任務")
-    args = parser.parse_args()
-
-    sys.path.insert(0, str(WORKSPACE_DIR))  # ✅ 確保 workspace 成為根模組
-    task_map = scan_task_modules(DEFAULT_SCAN_DIRS)
-
-    if args.task:
-        run_task(args.task, task_map)
-    else:
-        print("⚠️ 請使用 --task 參數指定要執行的任務。")
+# ➤ 匯入 .env 工具與主控邏輯
+from workspace.utils.env.env_manager import load_env, get_env
+from workspace.controller.master_controller import run
+from workspace.config.paths import get_register_url, get_headers
 
 if __name__ == "__main__":
-    main()
+    # ✅ 載入 .env 檔案
+    env_path = BASE_DIR / ".env"
+    if not load_env(env_path):
+        raise FileNotFoundError("❌ 找不到 .env 檔案，請確認檔案是否存在於專案根目錄")
+
+    # ✅ 取得 headers 與註冊 URL
+    headers = get_headers()
+    url = get_register_url()
+
+    if not headers:
+        raise ValueError("❌ [錯誤] 無法從 .env 解析出合法的 headers")
+    if not url:
+        raise ValueError("❌ [錯誤] 無法組合出註冊 API URL")
+
+    # ✅ 取得登入帳密
+    login_username = get_env("FAKESTORE_LOGIN_USERNAME")
+    login_password = get_env("FAKESTORE_LOGIN_PASSWORD")
+
+    if not login_username or not login_password:
+        raise ValueError("❌ [錯誤] 請在 .env 設定 FAKESTORE_LOGIN_USERNAME 與 FAKESTORE_LOGIN_PASSWORD")
+
+    login_cred = {
+        "username": login_username,
+        "password": login_password
+    }
+
+    # ✅ 呼叫主控制器
+    run(headers, url, login_cred)

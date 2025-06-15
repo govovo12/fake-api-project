@@ -23,10 +23,9 @@
 
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
-| data | enrich_payload | 根據 .env 的欄位設定（逗號分隔）從資料中取值並組裝 payload。 | ✅ |
-| data | enrich_with_uuid | 加上 uuid 欄位，回傳新資料（不修改原 dict）。 | ✅ |
-| data | load_json | 從指定路徑讀取 JSON 檔案，回傳 dict 或錯誤資訊。 | ✅ |
-| data | save_json | 將 dict 寫入指定路徑為 JSON 檔案。 | ✅ |
+| data | extract_fields_from_dict | [TOOL] 從 dict 中擷取指定欄位，回傳子 dict。 | ✅ |
+| data | save_json | 儲存資料為 JSON 格式。 | ✅ |
+| data | write_empty_data_file | 建立空白資料檔案，根據傳入的資料結構寫入檔案。 | ✅ |
 
 ---
 
@@ -42,7 +41,7 @@
 
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
-| error | handle_exception |  | ✅ |
+| error | handle_exception | [TOOL] 統一處理例外並轉換為 dict 格式 | ✅ |
 
 ---
 
@@ -83,14 +82,11 @@
 
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
-| file | clear_file | 清空檔案內容（不刪檔） | ✅ |
-| file | ensure_dir | 若目錄不存在則建立 | ✅ |
-| file | ensure_file | 若檔案不存在則建立空檔案 | ✅ |
+| file | clear_file | 清空檔案內容（不刪檔）並回傳成功或錯誤碼。 | ✅ |
+| file | ensure_dir | 若目錄不存在則建立，並回傳成功或錯誤碼。 | ✅ |
+| file | ensure_file | 若檔案不存在則建立空檔案，並回傳成功或錯誤碼。 | ✅ |
 | file | file_exists | 檢查檔案是否存在 | ✅ |
-| file | generate_testdata_path | 回傳測資儲存路徑。若格式不合法，回傳錯誤。 | ✅ |
-| file | get_file_name_from_path | 從 Path 回傳檔名 | ✅ |
-| file | is_file_empty | 檢查檔案是否為空（0 bytes） | ✅ |
-| file | save_json | 儲存 JSON 至指定路徑 | ✅ |
+| file | is_file_empty | 檢查檔案是否為空（0 bytes），並回傳結果。 | ✅ |
 
 ---
 
@@ -114,7 +110,8 @@
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
 | logger | format_log_message | [TOOL] 格式化 log 字串，標準格式：[timestamp] [level] message | ✅ |
-| logger | log_step | 根據狀態碼自動印出【步驟】成功/失敗訊息與錯誤說明 | ✅ |
+| logger | log_simple_result | [TOOL] 印出結果格式： (code=xxx, msg=XXX) | ✅ |
+| logger | print_trace | [TOOL] 印出 trace 訊息，標示當前步驟或 UUID | ✅ |
 | logger | write_log | [TOOL] 寫入 log 訊息到指定檔案。 | ✅ |
 
 ---
@@ -168,13 +165,13 @@
 |---|---|---|---|
 | response | get_code_from_dict | 取得 code 欄位（若不存在則回傳 None） | ✅ |
 | response | get_data_field_from_dict | 從 data 區塊中提取指定欄位值 | ✅ |
-| response | get_data_field_from_response | 從 JSON 的 data 區塊中擷取指定欄位 | ✅ |
+| response | get_data_field_from_response | 從 JSON 的 data 區塊中擷取指定欄位，若解析失敗回 None | ✅ |
 | response | get_error_message_from_dict | 優先從 msg，其次 error 擷取錯誤訊息 | ✅ |
-| response | get_error_message_from_response | 擷取 msg 或 error 為錯誤訊息 | ✅ |
-| response | get_json_field_from_response | 從 JSON 中擷取指定欄位值 | ✅ |
+| response | get_error_message_from_response | 擷取 msg 或 error 為錯誤訊息，若解析失敗回 '回傳格式錯誤' | ✅ |
+| response | get_json_field_from_response | 從 JSON 中擷取指定欄位值，若解析失敗回 None | ✅ |
 | response | get_status_code_from_response | 取得 HTTP status code | ✅ |
 | response | get_token_from_dict | 從 data 區塊中提取 token | ✅ |
-| response | get_token_from_response | 擷取 JSON 的 data.token 欄位 | ✅ |
+| response | get_token_from_response | 擷取 JSON 的 data.token 欄位，若解析失敗回 None | ✅ |
 
 ---
 
@@ -185,6 +182,7 @@
 | retry | retry_call | ✅ 工具：捕捉例外型 retry 函式（func 可能會 raise） | ✅ |
 | retry | retry_decorator | ✅ 裝飾器形式的 retry（支援 raise 例外型函式） | ✅ |
 | retry | retry_tool | ✅ 工具：針對回傳 (success, ...) 結構的模組提供 retry 機制（不捕例外） | ✅ |
+| retry | safe_call | ✅ 工具：捕捉 TaskModuleError 的函式呼叫包裝器 | ✅ |
 
 ---
 
@@ -210,14 +208,6 @@
 | time | iso_to_timestamp | 將 ISO 格式字串轉換為 timestamp（float秒） [TOOL] | ✅ |
 | time | timestamp_to_iso | 將 timestamp 轉換為指定時區的 ISO 格式字串 [TOOL] | ✅ |
 | time | wait_seconds | 讓程式等待指定秒數 [TOOL] | ✅ |
-
----
-
-## uuid
-
-| 模組 | 名稱 | 說明 | @tool |
-|---|---|---|---|
-| uuid | generate_batch_uuid_with_code | 工具模組：產生 UUID，回傳格式為 (success, uuid, meta) | ✅ |
 
 ---
 

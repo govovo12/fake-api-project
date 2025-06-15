@@ -83,3 +83,39 @@ def test_save_json_failure():
     
     # 檢查返回的錯誤碼是否為儲存失敗錯誤
     assert result == ResultCode.TOOL_FILE_WRITE_FAILED
+
+def test_extract_fields_from_dict_success():
+    """
+    測試 extract_fields_from_dict：正確擷取指定欄位
+    """
+    from workspace.utils.data.data_loader import extract_fields_from_dict
+
+    data = {
+        "username": "user123",
+        "password": "pass456",
+        "email": "x@x.com"
+    }
+    result = extract_fields_from_dict(data, ["username", "password"])
+    assert result == {"username": "user123", "password": "pass456"}
+
+
+def test_extract_fields_from_dict_missing_keys():
+    """
+    測試 extract_fields_from_dict：指定欄位部分不存在
+    """
+    from workspace.utils.data.data_loader import extract_fields_from_dict
+
+    data = {"username": "user123"}
+    result = extract_fields_from_dict(data, ["username", "password"])
+    assert result == {"username": "user123"}
+
+
+def test_extract_fields_from_dict_not_dict():
+    """
+    測試 extract_fields_from_dict：輸入非 dict
+    """
+    from workspace.utils.data.data_loader import extract_fields_from_dict
+
+    data = "not a dict"
+    result = extract_fields_from_dict(data, ["username"])
+    assert result == {}

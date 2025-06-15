@@ -65,8 +65,9 @@ def test_get_data_field_from_response_failure():
 
 def test_get_token_from_response_success():
     mock_resp = Mock()
-    mock_resp.json.return_value = {"data": {"token": "xyz"}}
+    mock_resp.json.return_value = {"token": "xyz"}  # ✅ 平鋪結構
     assert get_token_from_response(mock_resp) == "xyz"
+
 
 def test_get_token_from_response_failure():
     mock_resp = Mock()
