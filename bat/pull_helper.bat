@@ -1,15 +1,21 @@
 @echo off
-echo 🔄 Starting reset to latest remote state...
+echo [SYNC] Resetting local branch to match remote...
 
-:: 取得當前分支
+:: Get current branch name
 for /f %%i in ('git branch --show-current') do set CUR_BRANCH=%%i
 
-:: 拉最新 + 強制重設
+:: Reset to remote branch
 git fetch origin
 git reset --hard origin/%CUR_BRANCH%
 
-:: 刪除所有未追蹤檔案（包括被 gitignore 的）
+:: Clean all untracked files including those in .gitignore
 git clean -fdx
 
-echo ✅ Reset complete - project is now synced with origin/%CUR_BRANCH%
+:: Extra: Force remove venv folder if exists
+if exist venv (
+    echo [CLEAN] Deleting local venv folder...
+    rmdir /s /q venv
+)
+
+echo [DONE] Local project is now reset to origin/%CUR_BRANCH%
 pause
