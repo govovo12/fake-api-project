@@ -5,6 +5,7 @@ from workspace.controller.data_generation_controller import generate_user_and_pr
 from workspace.controller.user_registration_controller import register_user_with_log
 from workspace.utils.uuid.uuid_generator import generate_batch_uuid_with_code
 from workspace.config.rules.error_codes import ResultCode
+from workspace.controller.product_controller import create_product_and_report
 
 
 def run(headers: dict, url: str, login_cred: dict) -> int:
@@ -42,5 +43,12 @@ def run(headers: dict, url: str, login_cred: dict) -> int:
         return code
 
     print_trace(f"成功取得 token：{token}")
+
+     # 建立商品任務
+    print_trace("建立商品任務啟動")
+    code, _ = create_product_and_report(uuid, token)
+    log_simple_result(code)
+    if code != ResultCode.CREATE_PRODUCT_SUCCESS:
+        return code
 
     return ResultCode.SUCCESS

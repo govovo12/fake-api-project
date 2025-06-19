@@ -20,12 +20,21 @@ def get_user_path(uuid: str) -> Path:
 def get_product_path(uuid: str) -> Path:
     """根據 UUID 取得 product 測資 JSON 路徑"""
     return PRODUCT_TESTDATA_DIR / f"{uuid}.json"
+def get_cart_path(uuid: str) -> Path:
+    """根據 UUID 取得 cart 測資 JSON 路徑"""
+    return Path(f"workspace/testdata/cart/{uuid}.json")
 
 def get_user_testdata_path(filename: str) -> Path:
     return USER_TESTDATA_DIR / filename
 
 def get_product_testdata_path(filename: str) -> Path:
     return PRODUCT_TESTDATA_DIR / filename
+def get_create_product_url() -> str:
+    """取得建立商品 API 的完整 URL"""
+    return f"{get_base_url()}{get_env('FAKESTORE_PRODUCT_PATH')}"
+def get_create_cart_url() -> str:
+    """取得建立購物車 API 的完整 URL"""
+    return f"{get_base_url()}{get_env('FAKESTORE_CART_PATH')}"
 
 # === 測試模組路徑 ===
 

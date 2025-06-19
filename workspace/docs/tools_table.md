@@ -152,10 +152,10 @@
 
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
-| request | get | 發送 GET 請求（純粹工具，不做錯誤處理與 log） | ✅ |
-| request | parse_json_safe | 安全解析 JSON：成功回傳 (True, dict)，失敗回傳 (False, None) | ✅ |
-| request | post | 發送 POST 請求（純粹工具，不做錯誤處理與 log） | ✅ |
-| request | post_and_parse_json | 發送 POST 並解析 JSON（不判斷成功與否、不印 log、不處理錯誤碼） | ✅ |
+| request | get | 發送 GET 請求 | ✅ |
+| request | parse_json_safe | 嘗試解析 JSON，失敗時回 False, None | ✅ |
+| request | post | 發送 POST 請求 | ✅ |
+| request | post_and_parse_json | POST 並解析 JSON，回傳 (status_code, json_data) | ✅ |
 
 ---
 
@@ -171,7 +171,7 @@
 | response | get_json_field_from_response | 從 JSON 中擷取指定欄位值，若解析失敗回 None | ✅ |
 | response | get_status_code_from_response | 取得 HTTP status code | ✅ |
 | response | get_token_from_dict | 從 data 區塊中提取 token | ✅ |
-| response | get_token_from_response | 擷取 JSON 的 data.token 欄位，若解析失敗回 None | ✅ |
+| response | get_token_from_response | 擷取 JSON 的 token 欄位，若解析失敗回 None | ✅ |
 
 ---
 
@@ -179,10 +179,7 @@
 
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
-| retry | retry_call | ✅ 工具：捕捉例外型 retry 函式（func 可能會 raise） | ✅ |
-| retry | retry_decorator | ✅ 裝飾器形式的 retry（支援 raise 例外型函式） | ✅ |
-| retry | retry_tool | ✅ 工具：針對回傳 (success, ...) 結構的模組提供 retry 機制（不捕例外） | ✅ |
-| retry | safe_call | ✅ 工具：捕捉 TaskModuleError 的函式呼叫包裝器 | ✅ |
+| retry | retry_on_code | ✅ 工具：根據錯誤碼進行 retry（不捕例外） | ✅ |
 
 ---
 

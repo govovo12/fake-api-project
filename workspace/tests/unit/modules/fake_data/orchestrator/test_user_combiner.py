@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock
 from workspace.modules.fake_data.orchestrator.build_user_data_and_write import build_user_data_and_write
 from workspace.config.rules.error_codes import ResultCode
 
-pytestmark = [pytest.mark.unit, pytest.mark.combiner]
+pytestmark = [pytest.mark.unit, pytest.mark.orchestrator]
 
 # ✅ 結構性測試：build_user_data_and_write 是否正確串接底層模組
 

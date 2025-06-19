@@ -8,6 +8,12 @@ class ResultCode:
     TESTDATA_TASK_SUCCESS = 10000 # 測資任務成功完成
     REGISTER_TASK_SUCCESS = 10001  # 註冊任務成功（子控制器專用)
     LOGIN_TASK_SUCCESS = 10002  # 登入成功
+    CREATE_PRODUCT_SUCCESS = 10004
+
+    # 任務模組通用例外與伺服器錯誤碼（6000～）
+    REQUESTS_EXCEPTION =6000    # requests 發生 timeout 或連線失敗
+    SERVER_ERROR = 6001                # API 回傳 HTTP 5xx
+
     # ✅ 工具區模組錯誤碼
     TOOL_DIR_CREATE_FAILED = 40010
     TOOL_FILE_CLEAR_FAILED = 40011
@@ -29,6 +35,7 @@ class ResultCode:
     PRODUCT_CATEGORY_EMPTY = 41001  # 商品類別為空或不合法
     PRODUCT_GENERATION_FAILED = 41002  # 商品生成失敗
     FAKER_GENERATE_FAILED = 42001  # Faker 生成用戶資料失敗
+    CART_GENERATION_FAILED = 41003   # 購物車測資產生失敗
     
     # 註冊任務錯誤碼 42xxx 區段
     FAKER_REGISTER_FAILED = 42002           # 註冊失敗（API 回應非 2xx）
@@ -38,6 +45,9 @@ class ResultCode:
     LOGIN_API_FAILED = 43001    # 登入 API 回傳非 200（如 401 Unauthorized）
     LOGIN_EXCEPTION = 43002     # 登入時發生 requests 例外（timeout、連線失敗等）
 
+    # 模擬新增商品錯誤碼
+    CREATE_PRODUCT_FAILED = 40030
+
     @classmethod
     def is_success(cls, code: int) -> bool:
         return code in {
@@ -45,6 +55,7 @@ class ResultCode:
             cls.TESTDATA_TASK_SUCCESS,
             cls.REGISTER_TASK_SUCCESS,
             cls.LOGIN_TASK_SUCCESS,
+            cls.CREATE_PRODUCT_SUCCESS,
     }
 
     # ✅ 錯誤訊息對應表
@@ -65,6 +76,11 @@ class ResultCode:
         TOOL_USER_TESTDATA_FILE_WRITE_FAILED: "測資資料檔案寫入失敗",
         UUID_GEN_FAIL: "UUID 生成失敗",
 
+        #通用型錯誤
+        SERVER_ERROR: "伺服器發生錯誤（HTTP 5xx）", 
+        REQUESTS_EXCEPTION: "連線異常，請求過程發生例外或逾時",
+
+        #任務模組級別錯誤
         PRODUCT_CATEGORY_EMPTY: "商品類別為空或不合法",
         PRODUCT_GENERATION_FAILED: "商品資料生成失敗",
         FAKER_GENERATE_FAILED: "用戶測資生成失敗",
@@ -79,7 +95,10 @@ class ResultCode:
         FAKER_REGISTER_EXCEPTION: "使用者註冊過程中發生連線異常或請求錯誤",
 
         LOGIN_API_FAILED: "登入失敗，帳號或密碼錯誤",  
-        LOGIN_EXCEPTION: "登入過程發生例外，請稍後再試",  
+        LOGIN_EXCEPTION: "登入過程發生例外，請稍後再試", 
+
+        CREATE_PRODUCT_SUCCESS: "新增商品成功",
+        CREATE_PRODUCT_FAILED: "新增商品失敗", 
 
     }
 
