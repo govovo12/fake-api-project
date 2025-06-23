@@ -1,6 +1,11 @@
+# 📦 測試工具
 import pytest
 from unittest.mock import patch
+
+# 🧪 被測模組
 from workspace.controller.data_generation_controller import generate_user_and_product_data
+
+# ⚠️ 錯誤碼常數
 from workspace.config.rules.error_codes import ResultCode
 
 pytestmark = [pytest.mark.unit, pytest.mark.controller]

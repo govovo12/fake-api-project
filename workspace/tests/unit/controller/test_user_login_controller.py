@@ -1,8 +1,18 @@
+# -----------------------------
+# 📦 測試框架
+# -----------------------------
 import pytest
 from importlib import reload
+
+# -----------------------------
+# 🧪 被測模組與錯誤碼
+# -----------------------------
 import workspace.controller.user_login_controller as controller
 from workspace.config.rules.error_codes import ResultCode
 
+# -----------------------------
+# ✅ 測試標記
+# -----------------------------
 pytestmark = [pytest.mark.unit, pytest.mark.login, pytest.mark.controller]
 
 

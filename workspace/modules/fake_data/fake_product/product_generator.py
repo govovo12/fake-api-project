@@ -1,49 +1,58 @@
+# ----------------------------------------
+# 📦 標準函式庫
+# ----------------------------------------
 import random
 import string
+
+# ----------------------------------------
+# 🛠️ 專案內部錯誤碼與設定
+# ----------------------------------------
 from workspace.config.rules.error_codes import ResultCode
+from workspace.config.envs.fake_product_config import CATEGORIES, CATEGORY_IMAGES
 
-# 預設商品類別清單
-CATEGORY_LIST = [
-    "Clothes",
-    "Electronics",
-    "Jewelery",
-    "Men's Clothing",
-    "Women's Clothing"
-]
 
-def generate_product_data(title=None, price=None, category=None, image=None):
+def generate_product_data(title=None, price=None, category=None, image=None) -> dict:
     """
-    產生商品測試資料，並符合 Fake Store API 的要求。
-    隨機生成 description 和 image，並驗證格式是否正確。
+    任務模組：產生符合 Fake Store API 格式的商品測試資料
+
+    - 若未提供 image，會根據分類補預設圖片
+    - image 若為空字串，視為錯誤
+    - 欄位驗證失敗時回傳錯誤碼
+
+    :param title: 自訂標題（選填）
+    :param price: 自訂價格（選填）
+    :param category: 自訂分類（選填，若無則隨機）
+    :param image: 自訂圖片（選填，空字串視為錯）
+    :return: dict 商品資料 或錯誤碼
     """
     try:
-        # 每次都從類別清單中隨機選一個，不管外部有沒有傳 category
-        category = random.choice(CATEGORY_LIST)  # 隨機選擇一個 category
-        # ✅ 檢查選擇的 category 是否在 CATEGORY_LIST 內
-        if category not in CATEGORY_LIST:
-            return ResultCode.PRODUCT_CATEGORY_EMPTY  # 如果選擇的 category 不在清單內，返回錯誤碼
+        # 分類處理
+        category = category or random.choice(CATEGORIES)
+        if category not in CATEGORIES:
+            return ResultCode.PRODUCT_CATEGORY_EMPTY
 
-        # ✅ 檢查 price 是否為數字
+        # 價格驗證
         if price is not None and not isinstance(price, (int, float)):
-            return ResultCode.PRODUCT_GENERATION_FAILED  # 如果 price 不是數字，返回錯誤碼
+            return ResultCode.PRODUCT_GENERATION_FAILED
 
-        # 隨機生成 description（長度 5 至 10，字母 + 數字）
-        description = ''.join(random.choices(string.ascii_lowercase + string.digits, k=random.randint(5, 10)))
-
-        # 如果 description 不符合要求（例如長度不對），返回錯誤碼
+        # 描述產生
+        description = ''.join(random.choices(
+            string.ascii_lowercase + string.digits,
+            k=random.randint(5, 10)
+        ))
         if len(description) < 5 or len(description) > 10:
-            return ResultCode.PRODUCT_GENERATION_FAILED  # 如果 description 格式錯誤，返回錯誤碼
+            return ResultCode.PRODUCT_GENERATION_FAILED
 
-        # 固定的圖片 URL
-        image = "https://fakeimg.pl/250x250/?text=Sample" if image is None else image
+        # ✅ image 邏輯處理
+        if image == "":
+            return ResultCode.PRODUCT_GENERATION_FAILED  # 空字串為無效輸入
 
-
-
-        # 檢查 image 是否為空
         if not image:
-            return ResultCode.PRODUCT_GENERATION_FAILED  # 如果 image 為空，返回錯誤碼
+            image = CATEGORY_IMAGES.get(category)  # 根據分類補圖
 
-        # 生成商品資料並返回
+        if not image:
+            return ResultCode.PRODUCT_GENERATION_FAILED  # 若分類無對應圖也失敗
+
         return {
             "title": title or "Random Product",
             "price": price or round(random.uniform(5.0, 500.0), 2),
@@ -53,4 +62,4 @@ def generate_product_data(title=None, price=None, category=None, image=None):
         }
 
     except Exception:
-        return ResultCode.PRODUCT_GENERATION_FAILED  # 發生其他錯誤時返回錯誤碼
+        return ResultCode.PRODUCT_GENERATION_FAILED

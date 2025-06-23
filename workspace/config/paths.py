@@ -62,3 +62,30 @@ def get_login_url() -> str:
 
 # === 暫時保留 log 寫入位置（供測試 monkeypatch 用） ===
 LOG_PATH = WORKSPACE_ROOT / "reports" / "run_log.txt"
+
+# === 主控e2e測試時使用===
+def get_project_root() -> Path:
+    """
+    ✅ 傳回整個 fake-api-project 專案根目錄。
+    """
+    return Path(__file__).resolve().parents[2]
+def get_env_path() -> Path:
+    """
+    ✅ 傳回 fake-api-project 根目錄下的 .env 絕對路徑。
+    """
+    return PROJECT_ROOT / ".env"
+
+# 專案根目錄（BASE_DIR = workspace 的上一層）
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+def get_report_dir():
+    """取得 pytest 報告的根目錄（HTML 專用）"""
+    return BASE_DIR / "workspace" / "reports"
+
+def get_html_report_path(filename: str = "test_report.html"):
+    """
+    取得 HTML 報告完整路徑（可帶自訂檔名）
+    :param filename: 預設為 test_report.html，可改為帶 timestamp 的名稱
+    :return: reports/ 下的完整報告路徑
+    """
+    return get_report_dir() / filename

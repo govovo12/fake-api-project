@@ -1,9 +1,14 @@
+# 📦 測試工具
 import pytest
 from unittest.mock import patch, MagicMock
+
+# 🧪 被測模組
 from workspace.modules.fake_data.orchestrator.build_cart_data_and_write import build_cart_data_and_write
+
+# ⚠️ 錯誤碼常數
 from workspace.config.rules.error_codes import ResultCode
 
-pytestmark = [pytest.mark.unit, pytest.mark.orchestrator]
+pytestmark = [pytest.mark.unit, pytest.mark.combiner]
 
 
 @patch("workspace.modules.fake_data.orchestrator.build_cart_data_and_write.get_cart_path")
@@ -15,7 +20,6 @@ def test_build_cart_data_success(mock_save, mock_gen, mock_file, mock_dir, mock_
     """測試整體流程成功"""
     mock_path.return_value = MagicMock()
     mock_path.return_value.parent = MagicMock()
-
     mock_dir.return_value = ResultCode.SUCCESS
     mock_file.return_value = ResultCode.SUCCESS
     mock_gen.return_value = {
@@ -24,7 +28,6 @@ def test_build_cart_data_success(mock_save, mock_gen, mock_file, mock_dir, mock_
         "products": [{"productId": 7, "quantity": 2}]
     }
     mock_save.return_value = ResultCode.SUCCESS
-
     result = build_cart_data_and_write("abc123")
     assert result == ResultCode.SUCCESS
 
@@ -36,7 +39,6 @@ def test_build_cart_data_dir_fail(mock_dir, mock_path):
     mock_path.return_value = MagicMock()
     mock_path.return_value.parent = MagicMock()
     mock_dir.return_value = ResultCode.TOOL_DIR_CREATE_FAILED
-
     result = build_cart_data_and_write("abc123")
     assert result == ResultCode.TOOL_DIR_CREATE_FAILED
 
@@ -50,7 +52,6 @@ def test_build_cart_data_file_fail(mock_file, mock_dir, mock_path):
     mock_path.return_value.parent = MagicMock()
     mock_dir.return_value = ResultCode.SUCCESS
     mock_file.return_value = ResultCode.TOOL_FILE_CREATE_FAILED
-
     result = build_cart_data_and_write("abc123")
     assert result == ResultCode.TOOL_FILE_CREATE_FAILED
 
@@ -65,8 +66,7 @@ def test_build_cart_data_generation_fail(mock_gen, mock_file, mock_dir, mock_pat
     mock_path.return_value.parent = MagicMock()
     mock_dir.return_value = ResultCode.SUCCESS
     mock_file.return_value = ResultCode.SUCCESS
-    mock_gen.return_value = None  # 非 dict 即為錯誤
-
+    mock_gen.return_value = None
     result = build_cart_data_and_write("abc123")
     assert result == ResultCode.CART_GENERATION_FAILED
 
@@ -88,6 +88,5 @@ def test_build_cart_data_save_fail(mock_save, mock_gen, mock_file, mock_dir, moc
         "products": [{"productId": 2, "quantity": 4}]
     }
     mock_save.return_value = ResultCode.TOOL_FILE_WRITE_FAILED
-
     result = build_cart_data_and_write("abc123")
     assert result == ResultCode.TOOL_FILE_WRITE_FAILED

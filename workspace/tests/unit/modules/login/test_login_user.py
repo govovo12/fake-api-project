@@ -1,8 +1,18 @@
+# -----------------------------
+# 📦 測試框架與 mock
+# -----------------------------
 import pytest
 from unittest.mock import patch, Mock
+
+# -----------------------------
+# 🧪 被測模組與錯誤碼
+# -----------------------------
 from workspace.modules.login.login_user import login_user
 from workspace.config.rules.error_codes import ResultCode
 
+# -----------------------------
+# ✅ 測試標記
+# -----------------------------
 pytestmark = [pytest.mark.unit, pytest.mark.login]
 
 
@@ -17,7 +27,7 @@ def test_login_success():
         with patch("workspace.modules.login.login_user.get_token_from_response", return_value="abc123"):
             code, token = login_user(cred, headers)
 
-    assert code == ResultCode.LOGIN_TASK_SUCCESS
+    assert code == ResultCode.SUCCESS  # ✅ 已修正為通用成功碼
     assert token == "abc123"
 
 
@@ -37,7 +47,7 @@ def test_login_failed_invalid_credentials():
 
 def test_login_with_missing_fields():
     """⚠️ 測試缺欄位（只有 username）"""
-    cred = {"username": "user"}  # 沒有 password
+    cred = {"username": "user"}
     headers = {"Content-Type": "application/json"}
     mock_response = Mock(status_code=400)
     mock_response.json.return_value = {"error": "missing password"}

@@ -68,3 +68,16 @@ def clear_file(path: Path) -> int:
         return ResultCode.SUCCESS  # 成功
     except Exception:
         return ResultCode.TOOL_FILE_CLEAR_FAILED  # 清空檔案失敗
+
+@tool
+def delete_file(path: Path) -> int:
+    """
+    刪除指定檔案，若不存在則視為成功。
+    不處理業務邏輯，只處理檔案行為。
+    """
+    try:
+        if path.exists():
+            path.unlink()
+        return ResultCode.SUCCESS
+    except Exception:
+        return ResultCode.TOOL_FILE_DELETE_FAILED    

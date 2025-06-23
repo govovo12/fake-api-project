@@ -114,3 +114,59 @@ def test_clear_file_failure(mocker):
     mock_exists.assert_called_once()  # 確保檢查檔案是否存在
     mock_write.assert_called_once_with("", encoding="utf-8")  # 確保清空檔案失敗
     assert result == ResultCode.TOOL_FILE_CLEAR_FAILED  # 確認返回錯誤代碼
+
+# ===============================
+# 測試 delete_file 函式
+# ===============================
+
+def test_delete_file_success(mocker):
+    """
+    測試 delete_file 函式：成功刪除檔案
+    """
+    test_file = Path("test_file.txt")
+
+    # 模擬檔案存在 + 成功刪除
+    mock_exists = mocker.patch("pathlib.Path.exists", return_value=True)
+    mock_unlink = mocker.patch("pathlib.Path.unlink", return_value=None)
+
+    from workspace.utils.file.file_helper import delete_file
+    result = delete_file(test_file)
+
+    mock_exists.assert_called_once()
+    mock_unlink.assert_called_once()
+    assert result == ResultCode.SUCCESS
+
+
+def test_delete_file_not_exist(mocker):
+    """
+    測試 delete_file 函式：檔案不存在（視為成功）
+    """
+    test_file = Path("not_found.json")
+
+    # 模擬檔案不存在
+    mock_exists = mocker.patch("pathlib.Path.exists", return_value=False)
+    mock_unlink = mocker.patch("pathlib.Path.unlink")
+
+    from workspace.utils.file.file_helper import delete_file
+    result = delete_file(test_file)
+
+    mock_exists.assert_called_once()
+    mock_unlink.assert_not_called()  # 不應該刪除不存在的檔案
+    assert result == ResultCode.SUCCESS
+
+
+def test_delete_file_failure(mocker):
+    """
+    測試 delete_file 函式：刪除檔案失敗
+    """
+    test_file = Path("test_file.txt")
+
+    mock_exists = mocker.patch("pathlib.Path.exists", return_value=True)
+    mock_unlink = mocker.patch("pathlib.Path.unlink", side_effect=OSError("fail"))
+
+    from workspace.utils.file.file_helper import delete_file
+    result = delete_file(test_file)
+
+    mock_exists.assert_called_once()
+    mock_unlink.assert_called_once()
+    assert result == ResultCode.TOOL_FILE_DELETE_FAILED

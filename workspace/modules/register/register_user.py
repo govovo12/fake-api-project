@@ -1,4 +1,7 @@
+# 📦 共用錯誤碼
 from workspace.config.rules.error_codes import ResultCode
+
+# 📂 路徑與工具
 from workspace.config.paths import get_user_path
 from workspace.utils.data.data_loader import load_json
 from workspace.utils.request.request_handler import post
@@ -28,7 +31,7 @@ def register_user(uuid: str, url: str, headers: dict) -> int:
         status = get_status_code_from_response(response)
 
         if status in (200, 201):
-            return 0
+            return 0  
         return ResultCode.FAKER_REGISTER_FAILED
     except Exception:
         return ResultCode.FAKER_REGISTER_EXCEPTION

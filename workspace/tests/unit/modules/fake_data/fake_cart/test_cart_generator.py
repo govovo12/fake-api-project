@@ -1,8 +1,12 @@
+# 📦 測試工具
 import pytest
 import re
+
+# 🧪 被測模組
 from workspace.modules.fake_data.fake_cart.cart_generator import generate_cart_data
 
 pytestmark = [pytest.mark.unit, pytest.mark.fake_cart]
+
 
 def test_generate_cart_data_structure():
     """

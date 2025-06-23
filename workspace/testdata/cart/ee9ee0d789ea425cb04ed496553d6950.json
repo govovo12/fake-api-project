@@ -1,0 +1,22 @@
+{
+  "userId": 10,
+  "date": "2025-06-17",
+  "products": [
+    {
+      "productId": 1,
+      "quantity": 3
+    },
+    {
+      "productId": 7,
+      "quantity": 4
+    },
+    {
+      "productId": 16,
+      "quantity": 2
+    },
+    {
+      "productId": 12,
+      "quantity": 2
+    }
+  ]
+}

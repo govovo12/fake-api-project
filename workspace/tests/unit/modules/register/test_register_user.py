@@ -1,10 +1,17 @@
+# 📦 測試工具
 import pytest
 from unittest.mock import patch, Mock
+
+# 🧪 被測模組
 from workspace.modules.register.register_user import register_user
+
+# ⚠️ 錯誤碼常數
 from workspace.config.rules.error_codes import ResultCode
 
+# ✅ 測試標記：單元測試 + 註冊模組
 pytestmark = [pytest.mark.unit, pytest.mark.register]
 
+# 🧪 測試參數
 uuid = "abc123"
 url = "https://fake.com/users"
 headers = {"Content-Type": "application/json"}
