@@ -35,7 +35,7 @@ def test_ensure_dir_invalid_type():
 def test_ensure_dir_exception(monkeypatch):
     """💥 模擬目錄建立失敗"""
     monkeypatch.setattr(Path, "mkdir", mock_function(side_effect=OSError("mkdir fail")))
-    result = ensure_dir(Path("some/fake/dir"))
+    result = ensure_dir(Path("gome/fake/dir"))
     assert result == ResultCode.TOOL_DIR_CREATE_FAILED
 
 
@@ -61,11 +61,12 @@ def test_ensure_file_invalid_type():
     assert result == ResultCode.TOOL_INVALID_FILE_DATA
 
 
-def test_ensure_file_exception(monkeypatch):
+def test_ensure_file_exception(monkeypatch, tmp_path):
     """💥 模擬檔案建立失敗"""
     monkeypatch.setattr(Path, "touch", mock_function(side_effect=OSError("touch fail")))
-    result = ensure_file(Path("some/fake/file.txt"))
+    result = ensure_file(tmp_path / "fake_file.txt")
     assert result == ResultCode.TOOL_FILE_CREATE_FAILED
+
 
 
 def test_file_exists_true_and_false(tmp_path):
