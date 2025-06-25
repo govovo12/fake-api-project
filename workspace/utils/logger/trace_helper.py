@@ -24,3 +24,4 @@ def print_trace(step: str, note: Optional[str] = None) -> None:
 
     print(full_msg)       # CLI 即時顯示
     logger.info(full_msg) # 寫入 pytest-html 報表 or log 檔
+

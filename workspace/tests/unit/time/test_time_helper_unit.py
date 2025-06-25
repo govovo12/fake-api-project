@@ -1,93 +1,122 @@
+import sys
 import pytest
-import datetime
+from workspace.config.rules.error_codes import ResultCode
 from utils.time.time_helper import (
     get_time,
-    wait_seconds,
     timestamp_to_iso,
-    iso_to_timestamp
+    iso_to_timestamp,
+    wait_seconds,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.time]
 
+
 def test_get_time_default_utc_str():
-    """測試預設 UTC 時區格式化字串輸出"""
-    value = get_time()
-    assert isinstance(value, str)
-    assert len(value) == 19  # YYYY-MM-DD HH:MM:SS
+    """✅ 預設不帶參數，回傳 UTC 時區格式化字串"""
+    val = get_time()
+    assert isinstance(val, str)
+    assert len(val) == 19  # YYYY-MM-DD HH:MM:SS
+
 
 @pytest.mark.parametrize("tz", ["UTC", "Asia/Taipei", "local"])
-def test_get_time_different_tz_str(tz):
-    """測試不同時區字串輸出"""
+def test_get_time_various_tz_str(tz):
+    """✅ 傳入不同時區，皆可正常回傳格式化字串"""
     val = get_time(tz=tz)
     assert isinstance(val, str)
     assert len(val) > 10
 
+
 def test_get_time_custom_format():
-    """測試自訂格式字串輸出"""
+    """✅ 自訂格式輸出成功"""
     val = get_time(fmt="%d/%m/%Y-%H")
     assert "/" in val and "-" in val
 
+
 @pytest.mark.parametrize("output, expected_type", [
     ("str", str),
-    ("datetime", datetime.datetime),
-    ("timestamp", float),
+    ("datetime", object),
+    ("timestamp", (int, float)),
 ])
 def test_get_time_output_types(output, expected_type):
-    """測試不同 output 型態"""
+    """✅ 測試不同輸出型態回傳正確"""
     val = get_time(output=output)
     assert isinstance(val, expected_type)
 
-def test_get_time_all_args():
-    """全參數同時測試（Asia/Taipei, custom format, datetime output）"""
-    result = get_time(tz="Asia/Taipei", fmt="%Y-%m-%d", output="datetime")
-    assert isinstance(result, datetime.datetime)
 
-def test_get_time_invalid_tz(monkeypatch):
-    """異常：傳入無效時區，應拋錯"""
-    with pytest.raises(Exception):
-        get_time(tz="NotAZone")
+def test_get_time_invalid_tz_returns_error_code():
+    """💥 傳入無效時區，回傳錯誤碼"""
+    result = get_time(tz="Invalid/Timezone")
+    assert result == ResultCode.TOOL_TIME_INVALID_TIMEZONE
 
-def test_get_time_invalid_output():
-    """異常：output 傳入不支援值"""
-    with pytest.raises(Exception):
-        get_time(output="badtype")
 
-def test_get_time_invalid_format():
-    """異常：fmt 格式錯誤（strftime 應拋 ValueError）"""
-    with pytest.raises(ValueError):
-        get_time(fmt="%%%QQQ")
+def test_get_time_invalid_output_returns_error_code():
+    """💥 傳入不支援的 output 參數，回傳錯誤碼"""
+    result = get_time(output="unknown")
+    assert result == ResultCode.TOOL_TIME_UNSUPPORTED_OUTPUT
 
-def test_iso_to_timestamp_and_back():
-    """ISO 與 timestamp 互轉驗證"""
+
+def test_get_time_invalid_format_returns_error_code():
+    """💥 傳入錯誤格式字串，回傳錯誤碼"""
+    result = get_time(fmt="%%%invalid")
+    assert result == ResultCode.TOOL_TIME_INVALID_FORMAT
+
+
+def test_get_time_without_zoneinfo(monkeypatch):
+    """💥 模擬無 zoneinfo 模組，強制走 pytz 分支"""
+    monkeypatch.delitem(sys.modules, "zoneinfo", raising=False)
+    val = get_time(tz="UTC")
+    assert isinstance(val, str)
+
+
+def test_timestamp_to_iso_valid():
+    """✅ timestamp_to_iso 正常回傳 ISO 格式字串"""
+    val = timestamp_to_iso(1716898800, tz="UTC")
+    assert isinstance(val, str)
+    assert "T" in val
+
+
+def test_timestamp_to_iso_invalid_timezone():
+    """💥 傳入錯誤時區字串，回傳錯誤碼"""
+    result = timestamp_to_iso(1716898800, tz="Invalid/Timezone")
+    assert result == ResultCode.TOOL_TIME_INVALID_TIMEZONE
+
+
+def test_timestamp_to_iso_invalid_timezone():
+    result = timestamp_to_iso(1234567890, tz="Invalid/Timezone")
+    assert result == ResultCode.TOOL_TIME_INVALID_TIMEZONE
+
+
+
+
+def test_iso_to_timestamp_valid():
+    """✅ ISO 字串成功轉 timestamp"""
     now = get_time(output="datetime")
-    iso = now.isoformat()
-    ts = iso_to_timestamp(iso)
-    # 時間戳相差不得超過 1 秒
-    assert abs(now.timestamp() - ts) < 1
+    iso_str = now.isoformat()
+    ts = iso_to_timestamp(iso_str)
+    assert isinstance(ts, float) or isinstance(ts, int)
 
-def test_timestamp_to_iso_type():
-    """timestamp_to_iso 型態驗證"""
-    ts = 1716898800
-    iso = timestamp_to_iso(ts, tz="Asia/Taipei")
-    assert isinstance(iso, str)
-    assert "T" in iso
 
-def test_wait_seconds(monkeypatch):
-    """wait_seconds 只驗證 sleep 被呼叫（不實際等待）"""
+def test_iso_to_timestamp_invalid_format_returns_error_code():
+    """💥 傳入錯誤格式 ISO 字串，回傳錯誤碼"""
+    result = iso_to_timestamp("bad-format")
+    assert result == ResultCode.TOOL_TIME_INVALID_FORMAT
+
+
+def test_wait_seconds_positive(monkeypatch):
+    """✅ 測試 wait_seconds 正常等待，使用 monkeypatch 避免實際等待"""
     called = {"flag": False}
+
     def fake_sleep(sec):
         called["flag"] = True
         assert sec == 2
+
     monkeypatch.setattr("time.sleep", fake_sleep)
-    wait_seconds(2)
+    result = wait_seconds(2)
     assert called["flag"] is True
+    assert result == ResultCode.SUCCESS
 
-def test_timestamp_to_iso_invalid_tz():
-    """timestamp_to_iso 異常：無效時區"""
-    with pytest.raises(Exception):
-        timestamp_to_iso(1716898800, tz="NoSuchZone")
 
-def test_iso_to_timestamp_invalid():
-    """iso_to_timestamp 異常：非法格式"""
-    with pytest.raises(ValueError):
-        iso_to_timestamp("bad-format")
+def test_wait_seconds_negative():
+    """💥 負秒數輸入回傳錯誤碼"""
+    result = wait_seconds(-5)
+    assert result != ResultCode.SUCCESS

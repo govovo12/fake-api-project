@@ -7,6 +7,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.log]
 from workspace.utils.logger.trace_helper import print_trace
 
 
+
 def test_print_trace_basic(capfd):
     """
     測試 print_trace 基本輸出是否正確包含 step
@@ -23,3 +24,4 @@ def test_print_trace_with_note(capfd):
     print_trace("STEP 2", "建立產品")
     out, err = capfd.readouterr()
     assert "[TRACE] STEP 2 - 建立產品" in out
+

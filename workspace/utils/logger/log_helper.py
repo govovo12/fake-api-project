@@ -6,7 +6,6 @@
 
 import logging
 from typing import Optional
-
 from workspace.config.rules.error_codes import (
     ResultCode,
     SUCCESS_CODES,
@@ -54,3 +53,4 @@ def log_simple_result(code: int, context: Optional[str] = None) -> None:
     # CLI 印出 + logger 寫入（供 pytest-html 報表使用）
     print(full_msg)
     logger.info(full_msg)
+    

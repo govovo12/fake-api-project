@@ -1,61 +1,55 @@
 from pathlib import Path
-from datetime import date
+from workspace.config.rules.error_codes import ResultCode
 
 def tool(func):
     func.is_tool = True
     return func
 
 @tool
-def stub_shiftjis_encoded_json() -> bytes:
-    """回傳 Shift-JIS 編碼的假 JSON 資料 (格式測試用) [TOOL]"""
-    return '{"key": "value"}'.encode("shift_jis")
+def stub_valid_json_file() -> str:
+    """
+    回傳一個有效的 JSON 檔案路徑字串（假資料示範用）
+    """
+    return "tests/unit/fake_data_stub/test_valid.json"
+
 
 @tool
-def stub_valid_user_json() -> dict:
-    """產生範例使用者 dict [TOOL]"""
-    return {
-        "id": 1,
-        "name": "Alice",
-        "email": "alice@example.com"
-    }
+def stub_invalid_json_file() -> int:
+    """
+    寫入一個格式錯誤的 JSON 檔案，用於測試失敗情境。
+    寫入成功回傳 ResultCode.SUCCESS，失敗回傳錯誤碼。
+    """
+    file_path = Path("tests/unit/fake_data_stub/test_invalid.json")
+    try:
+        file_path.write_text("{invalid json:", encoding="utf-8")
+        return ResultCode.SUCCESS
+    except Exception:
+        return ResultCode.TOOL_STUB_FILE_WRITE_FAILED
+
 
 @tool
-def stub_product_payload(product_id=101, quantity=1):
-    """產生範例商品 payload dict [TOOL]"""
-    return {
-        "product_id": product_id,
-        "quantity": quantity
-    }
+def stub_valid_json_dict() -> dict:
+    """
+    回傳一個有效的 JSON 格式字典，供測試使用
+    """
+    return {"name": "R88", "version": "1.0", "enabled": True}
+
 
 @tool
-def stub_nonexistent_path() -> Path:
-    """回傳一個一定不存在的檔案路徑 [TOOL]"""
-    return Path("Z:/this/path/should/not/exist.json")
+def stub_invalid_json_dict() -> dict:
+    """
+    回傳一個格式不完整的字典（假資料示範）
+    """
+    return {"name": "R88", "version": None, "enabled": "yes"}
+
 
 @tool
-def stub_invalid_json_file(tmp_path: Path) -> Path:
-    """建立一個格式錯誤的 JSON 檔案並回傳其路徑 [TOOL]"""
-    bad_file = tmp_path / "bad.json"
-    bad_file.write_text("{bad json}", encoding="utf-8")
-    return bad_file
-
-@tool
-def stub_user_payload(username="johnd", password="m38rmF$"):
-    """產生登入用戶 payload dict [TOOL]"""
-    return {
-        "username": username,
-        "password": password
-    }
-
-@tool
-def stub_cart_payload(user_id=3, cart_date="2020-03-01", products=None):
-    """產生購物車 payload dict [TOOL]"""
-    return {
-        "userId": user_id,
-        "date": cart_date,
-        "products": products or [
-            {"productId": 1, "quantity": 4},
-            {"productId": 2, "quantity": 1},
-            {"productId": 3, "quantity": 6}
-        ]
-    }
+def stub_invalid_input(data) -> int:
+    """
+    示範一個接受輸入參數並檢查的函式
+    如果輸入不合法，回傳錯誤碼；否則回成功碼
+    """
+    if not isinstance(data, dict):
+        return ResultCode.TOOL_STUB_INVALID_DATA
+    # 假設其他驗證邏輯
+    return ResultCode.SUCCESS
