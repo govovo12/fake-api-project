@@ -55,10 +55,11 @@ def test_get_time_invalid_output_returns_error_code():
     assert result == ResultCode.TOOL_TIME_UNSUPPORTED_OUTPUT
 
 
-def test_get_time_invalid_format_returns_error_code():
-    """💥 使用非法格式（如 %Q）應回傳錯誤碼"""
-    result = get_time(fmt="%Q")  # %Q 是非法格式
-    assert result == ResultCode.TOOL_TIME_INVALID_FORMAT 
+def test_get_time_invalid_timezone_returns_error_code():
+    """💥 傳入無效時區應回傳錯誤碼"""
+    result = get_time(tz="Fake/Timezone")
+    assert result == ResultCode.TOOL_TIME_INVALID_TIMEZONE
+
 
 
 
