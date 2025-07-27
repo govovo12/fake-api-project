@@ -14,4 +14,4 @@ def test_master_controller_real_flow(controller_inputs):
 
     result = run(headers, url, login_cred)
 
-    assert result == ResultCode.MASTER_TASK_SUCCESS
+    assert result == ResultCode.MASTER_TASK_SUCCESS 
