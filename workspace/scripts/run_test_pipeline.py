@@ -1,7 +1,7 @@
 """
 📦 測試批次執行腳本：依序執行四階段測試、產出報告、計算覆蓋率
 """
-from workspace.config.paths import get_phase_test_dir
+
 import sys
 import os
 import subprocess
@@ -21,7 +21,7 @@ from workspace.scripts.report_setup import (
 )
 
 
-
+from workspace.config.paths import get_phase_test_dir
 # ✅ 測試階段設定（順序不可變）
 TEST_PHASES = [
     ("unit", "unit"),
