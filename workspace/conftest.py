@@ -4,6 +4,9 @@ import pytest
 from pathlib import Path
 from config import paths  # 正確 patch 目標是這個 paths
 
+from dotenv import load_dotenv
+load_dotenv()
+
 # ✅ 匯入測試 fixture 模組（修正路徑與名稱）
 from utils.fixture.fixture_env import temp_env_fixture
 from utils.fixture.fixture_logger import fake_logger
