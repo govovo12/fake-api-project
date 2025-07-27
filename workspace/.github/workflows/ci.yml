@@ -1,0 +1,41 @@
+name: Run CI Test & Deploy (Docker)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+
+    container:
+      image: python:3.11
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install Python dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Load .env
+      run: |
+        pip install python-dotenv
+        python -c "from dotenv import load_dotenv; load_dotenv()"
+
+    - name: Run full test pipeline
+      run: python workspace/scripts/run_test_pipeline.py
+
+    - name: Notify via Telegram
+      env:
+        CI_TEST_STATUS: ${{ job.status }}
+      run: python workspace/utils/notifier/notify_ci_result.py
+
+    - name: Deploy reports to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./workspace/reports

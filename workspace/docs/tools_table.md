@@ -1,16 +1,5 @@
 # 🛠️ Fake API 專案自製工具對照表（含分類分段）
 
-## asserts
-
-| 模組 | 名稱 | 說明 | @tool |
-|---|---|---|---|
-| asserts | assert_contains_substring | 驗證 substring 是否出現在 text 中 [TOOL] | ✅ |
-| asserts | assert_in_keys | 驗證 obj 是否包含所有指定 keys [TOOL] | ✅ |
-| asserts | assert_json_equal | 驗證兩個 JSON 結構是否一致 [TOOL] | ✅ |
-| asserts | assert_status_code | 驗證 response.status_code 是否等於預期 [TOOL] | ✅ |
-
----
-
 ## callback
 
 | 模組 | 名稱 | 說明 | @tool |
@@ -83,10 +72,11 @@
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
 | file | clear_file | 清空檔案內容（不刪檔）並回傳成功或錯誤碼。 | ✅ |
+| file | delete_file | 刪除指定檔案，若不存在則視為成功。 | ✅ |
 | file | ensure_dir | 若目錄不存在則建立，並回傳成功或錯誤碼。 | ✅ |
 | file | ensure_file | 若檔案不存在則建立空檔案，並回傳成功或錯誤碼。 | ✅ |
-| file | file_exists | 檢查檔案是否存在 | ✅ |
-| file | is_file_empty | 檢查檔案是否為空（0 bytes），並回傳結果。 | ✅ |
+| file | file_exists | 檢查檔案是否存在。 | ✅ |
+| file | is_file_empty | 檢查檔案是否為空（0 bytes），正常回傳 bool，失敗回傳錯誤碼。 | ✅ |
 
 ---
 
@@ -110,8 +100,6 @@
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
 | logger | format_log_message | [TOOL] 格式化 log 字串，標準格式：[timestamp] [level] message | ✅ |
-| logger | log_simple_result | [TOOL] 印出結果格式： (code=xxx, msg=XXX) | ✅ |
-| logger | print_trace | [TOOL] 印出 trace 訊息，標示當前步驟或 UUID | ✅ |
 | logger | write_log | [TOOL] 寫入 log 訊息到指定檔案。 | ✅ |
 
 ---
@@ -179,7 +167,7 @@
 
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
-| retry | retry_on_code | ✅ 工具：根據錯誤碼進行 retry（不捕例外） | ✅ |
+| retry | retry_on_code | 通用 retry 工具：依據錯誤碼進行重試。 | ✅ |
 
 ---
 
@@ -187,13 +175,11 @@
 
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
-| stub | stub_cart_payload | 產生購物車 payload dict [TOOL] | ✅ |
-| stub | stub_invalid_json_file | 建立一個格式錯誤的 JSON 檔案並回傳其路徑 [TOOL] | ✅ |
-| stub | stub_nonexistent_path | 回傳一個一定不存在的檔案路徑 [TOOL] | ✅ |
-| stub | stub_product_payload | 產生範例商品 payload dict [TOOL] | ✅ |
-| stub | stub_shiftjis_encoded_json | 回傳 Shift-JIS 編碼的假 JSON 資料 (格式測試用) [TOOL] | ✅ |
-| stub | stub_user_payload | 產生登入用戶 payload dict [TOOL] | ✅ |
-| stub | stub_valid_user_json | 產生範例使用者 dict [TOOL] | ✅ |
+| stub | stub_invalid_input | 示範一個接受輸入參數並檢查的函式 | ✅ |
+| stub | stub_invalid_json_dict | 回傳一個格式不完整的字典（假資料示範） | ✅ |
+| stub | stub_invalid_json_file | 寫入一個格式錯誤的 JSON 檔案，用於測試失敗情境。 | ✅ |
+| stub | stub_valid_json_dict | 回傳一個有效的 JSON 格式字典，供測試使用 | ✅ |
+| stub | stub_valid_json_file | 回傳一個有效的 JSON 檔案路徑字串（假資料示範用） | ✅ |
 
 ---
 
@@ -201,10 +187,10 @@
 
 | 模組 | 名稱 | 說明 | @tool |
 |---|---|---|---|
-| time | get_time | 彈性取得目前時間（可選時區、格式、輸出型態）[TOOL] | ✅ |
-| time | iso_to_timestamp | 將 ISO 格式字串轉換為 timestamp（float秒） [TOOL] | ✅ |
-| time | timestamp_to_iso | 將 timestamp 轉換為指定時區的 ISO 格式字串 [TOOL] | ✅ |
-| time | wait_seconds | 讓程式等待指定秒數 [TOOL] | ✅ |
+| time | get_time | 取得指定時區的當前時間，支援多種輸出格式。 | ✅ |
+| time | iso_to_timestamp | 將 ISO 格式時間字串轉為 UNIX timestamp。 | ✅ |
+| time | timestamp_to_iso |  | ✅ |
+| time | wait_seconds |  | ✅ |
 
 ---
 

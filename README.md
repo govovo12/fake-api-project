@@ -1,53 +1,99 @@
-🧪 fake-api-project
-這是個示範用的 API 自動化測試框架，
-包含功能測試、整合測試，還支援 CI/CD 流程和測試通知，
-適合拿來當作品集或實務練習。
+# 🛒 Fake Store API 測試框架
 
-📁 專案結構簡介
+本專案是一個模擬電商平台的自動化測試框架，涵蓋使用者註冊、登入、建立訂單、購物車操作與登出流程，並整合完整的單元、整合、端對端測試與覆蓋率報告，支援 GitHub Actions 與 Telegram 通知。
 
-fake-api-project/
-├── main.py             # 入口，集中管理 log、錯誤、通知
-├── requirements.txt    # Python 套件依賴
-├── bat/                # 常用一鍵腳本（切分支、推送、更新套件等）
-├── workspace/          # 主要程式碼與測試
-│   ├── config/         # 全域設定（路徑、金鑰、錯誤碼）
-│   ├── controller/     # 控制器，串接模組流程與錯誤處理
-│   ├── modules/        # 真正的 API 請求邏輯
-│   ├── notifier/       # 通知系統（目前用 Telegram）
-│   ├── testdata/       # 測試用資料（JSON）
-│   ├── tests/          # pytest 測試檔
-│   ├── utils/          # 工具類模組（log、assert、retry 等）
-│   ├── logs/           # 日誌檔案目錄
-│   └── reports/        # 測試報告
-✅ 設計原則
-每個模組職責分明，互不干擾
+---
 
-main.py 是統一入口，負責錯誤、log、通知整合
+## 📁 專案結構（四層架構）
 
-由 controller 處理流程與錯誤彙整
+```shell
+workspace/
+├── scripts/             # 第四層：測試執行入口（run_test_pipeline.py）
+├── config/              # 第三層：paths、錯誤碼與環境設定
+├── modules/             # 第二層：子控制器與任務模組（各功能如登入、註冊、購物等）
+├── tools/               # 第一層：底層工具模組（如 request、token、log、printer）
+└── tests/               # 各階段測試（unit, infra, integration, e2e）
+```
 
-真正跟 API 請求相關邏輯寫在 modules
+---
 
-測試跟模組一一對應，方便管理
+## ✅ 測試階段說明
 
-🔧 輔助工具
-bat/ 裡有常用腳本，像是切換分支、推送、更新套件、顯示專案結構
+| 測試階段 | 說明                          | 標記       |
+|----------|-------------------------------|------------|
+| Unit     | 工具模組與任務模組的單元測試  | `unit`     |
+| Infra    | 第三層設定模組與環境驗證測試  | `infra`    |
+| Integration | 子控制器串接流程與資源互動測試 | `integration` |
+| E2E      | 跨多層模組的端對端驗證測試     | `e2e`      |
 
-測試會產出漂亮的 HTML 報告放在 workspace/reports
+---
 
-測試結果會自動通知 Telegram
+## 📈 覆蓋率與報告說明
 
-🧠 維護策略
-都用 Path(__file__).resolve() 做路徑管理，避免錯誤
+所有測試階段皆整合 `pytest-cov`，會依階段產出測試報告與覆蓋率：
 
-模組拆得細，單一職責好維護
+```
+workspace/
+├── reports/
+│   ├── unit/
+│   │   └── unit_test_report_*.html
+│   ├── integration/
+│   ├── e2e/
+│   ├── coverage/
+│   │   ├── .coverage.unit
+│   │   ├── .coverage.integration
+│   │   └── ...
+│   └── TOTAL/
+│       └── index.html  ← ✅ 總覆蓋率報告
+```
 
-將來可搭配 JSON schema 驗證測試資料
+---
 
-🚀 如何開始
+## 🚀 執行方式
 
-# 安裝套件
-pip install -r requirements.txt
+### ✅ 本地執行整體測試流程
 
-# 執行所有測試並產出 HTML 報告
-pytest --html=workspace/reports/report.html --self-contained-html
+```bash
+python workspace/scripts/run_test_pipeline.py
+```
+
+### ✅ 執行指定階段測試（帶標記）
+
+```bash
+pytest -m "unit or integration" --cov=workspace
+```
+
+### ✅ 一鍵清理與格式化
+
+```bash
+clean_and_format.bat
+```
+
+---
+
+## 🧪 CI/CD 機制（GitHub Actions）
+
+- CI 自動執行四階段測試
+- TG 機器人推送簡要測試結果（含成功/失敗與時間戳）
+- 報告自動部署至 GitHub Pages，附帶連結點開瀏覽
+
+---
+
+## 🔐 機密管理（Telegram）
+
+- 本地：使用 `.env` 管理 TG Token 與 Chat ID
+- GitHub：採用 Secret 機制設定同名環境變數
+
+---
+
+## 📄 備註
+
+- 若專案中有部分檔案不需測試（如 paths.py 等輔助模組），可透過 `.coveragerc` 或合理排除，不影響整體評估。
+- 若需更改測試報告輸出格式或路徑，請編輯 `run_test_pipeline.py` 與 `report_setup.py`
+
+---
+
+## 👨‍💻 作者資訊
+
+- Author: 自學測試開發者
+- Last Update: 2025-07-28

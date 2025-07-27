@@ -89,3 +89,24 @@ def get_html_report_path(filename: str = "test_report.html"):
     :return: reports/ 下的完整報告路徑
     """
     return get_report_dir() / filename
+
+def get_phase_report_dir(phase: str) -> Path:
+    """取得指定測試階段（unit/integration/e2e/infra）的報告資料夾"""
+    return get_report_dir() / phase
+
+def get_phase_coverage_dir(phase: str) -> Path:
+    """取得指定測試階段的 coverage 輸出資料夾"""
+    return get_report_dir() / "coverage" / phase
+
+def get_htmlcov_dir() -> Path:
+    return get_report_dir() / "coverage"
+
+def get_phase_test_dir(phase: str) -> Path:
+    """
+    根據測試階段回傳對應測試目錄
+    - unit → workspace/tests/unit
+    - infra → workspace/tests/infra
+    - integration → workspace/tests/integration
+    - e2e → workspace/tests/e2e
+    """
+    return TESTS_ROOT / phase

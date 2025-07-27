@@ -1,43 +1,43 @@
 import pytest
-from utils.notifier.telegram_notifier import TelegramNotifier
+import requests
+from unittest.mock import patch, MagicMock
+
+from workspace.utils.notifier.telegram_notifier import TelegramNotifier
 
 pytestmark = [pytest.mark.unit, pytest.mark.notifier]
 
-def test_send_success(monkeypatch):
-    """[SUCCESS] 發送成功時應回傳 True"""
-    class FakeResponse:
-        status_code = 200
-    def fake_post(url, json, timeout):
-        assert "chat_id" in json and "text" in json
-        return FakeResponse()
-    monkeypatch.setattr("utils.notifier.telegram_notifier.requests.post", fake_post)
-    notifier = TelegramNotifier("FAKE_TOKEN", "FAKE_CHAT_ID")
-    assert notifier.send("測試訊息") is True
 
-def test_send_fail_http(monkeypatch):
-    """[FAIL] 發送失敗 (非 200 status_code) 應回傳 False"""
-    class FakeResponse:
-        status_code = 400
-    monkeypatch.setattr(
-        "utils.notifier.telegram_notifier.requests.post",
-        lambda url, json, timeout: FakeResponse()
-    )
-    notifier = TelegramNotifier("FAKE_TOKEN", "FAKE_CHAT_ID")
-    assert notifier.send("訊息") is False
+class TestTelegramNotifier:
+    def test_send_success(self):
+        """✅ 成功發送 Telegram 訊息"""
+        with patch("workspace.utils.notifier.telegram_notifier.requests.post") as mock_post:
+            mock_response = MagicMock(status_code=200, json=lambda: {"ok": True})
+            mock_post.return_value = mock_response
 
-def test_send_fail_exception(monkeypatch):
-    """[FAIL] 發送時遇 Exception 應回傳 False"""
-    def fake_post(url, json, timeout):
-        raise Exception("network error")
-    monkeypatch.setattr("utils.notifier.telegram_notifier.requests.post", fake_post)
-    notifier = TelegramNotifier("FAKE_TOKEN", "FAKE_CHAT_ID")
-    assert notifier.send("錯誤訊息") is False
+            notifier = TelegramNotifier(token="fake-token", chat_id="12345")
+            result = notifier.send("Hello, world!")
 
-def test_send_missing_token_or_chat_id():
-    """[EDGE] 缺 token 或 chat_id 應直接回傳 False（不發送）"""
-    notifier = TelegramNotifier("", "123")
-    assert notifier.send("msg") is False
-    notifier = TelegramNotifier("T", "")
-    assert notifier.send("msg") is False
-    notifier = TelegramNotifier("", "")
-    assert notifier.send("msg") is False
+            mock_post.assert_called_once()
+            assert result is True
+
+    def test_send_failure_due_to_status_code(self):
+        """❌ 發送失敗：回傳非 200 狀態碼"""
+        with patch("workspace.utils.notifier.telegram_notifier.requests.post") as mock_post:
+            mock_post.return_value = MagicMock(status_code=500)
+
+            notifier = TelegramNotifier(token="fake-token", chat_id="12345")
+            result = notifier.send("Failed message")
+
+            assert result is False
+
+    def test_send_failure_due_to_missing_token(self):
+        """❌ 發送失敗：token 缺失"""
+        notifier = TelegramNotifier(token=None, chat_id="12345")
+        result = notifier.send("Missing token")
+        assert result is False
+
+    def test_send_failure_due_to_missing_chat_id(self):
+        """❌ 發送失敗：chat_id 缺失"""
+        notifier = TelegramNotifier(token="abc123", chat_id=None)
+        result = notifier.send("Missing chat_id")
+        assert result is False

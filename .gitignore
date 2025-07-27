@@ -31,3 +31,14 @@ workspace/testdata/**/temp_*.json
 
 # === env 設定說明 ===
 # env 檔不被忽略，確保可以同步 env 設定
+
+# === 測試產物與報告 ===
+-workspace/reports/
++workspace/reports/coverage/
++workspace/reports/unit/
++workspace/reports/infra/
++workspace/reports/integration/
++workspace/reports/e2e/
+
+# ✅ 保留 workspace/reports/TOTAL/index.html（給 GitHub Pages 用）
+!workspace/reports/TOTAL/index.html
