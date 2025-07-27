@@ -93,6 +93,16 @@ clean_and_format.bat
 
 ---
 
+### 📝 E2E 測試容錯說明
+
+因部分第三方 API（如 fakestoreapi.com）在 GitHub Actions 上可能因 IP 封鎖導致測試失敗，為避免 CI 流程中斷，本框架設計如下容錯策略：
+
+- `run_test_pipeline.py` 中的 `e2e` 測試階段會照常執行並產出報告
+- 若 `e2e` 測試失敗，流程 **不會中止**，仍會產出總體報告與觸發後續流程
+- 本地執行 `e2e` 測試仍會完整驗證所有功能，建議開發時完整執行
+
+如需強制 CI 上中斷流程，請調整 `run_test_pipeline.py` 中對 `e2e` 階段的錯誤處理策略。
+
 ## 👨‍💻 作者資訊
 
 - Author: 自學測試開發者

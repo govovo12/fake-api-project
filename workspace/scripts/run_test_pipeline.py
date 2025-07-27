@@ -63,11 +63,16 @@ def main():
     print("\n🚀 開始執行完整測試流程...\n")
     reset_report_root()
 
+    has_error = False  # 👈 新增：用來記錄是否有階段失敗
+
     for marker, phase in TEST_PHASES:
         result_code = run_pytest_with_coverage(marker, phase)
         if result_code != 0:
-            print(f"\n❌ [{phase}] 測試失敗，流程中止")
-            sys.exit(result_code)
+            print(f"\n❌ [{phase}] 測試失敗")
+            if phase == "e2e":
+                print("⚠️ e2e 測試失敗，但流程將繼續執行")
+                continue  # 👈 e2e 失敗不終止
+            has_error = True  # 👈 其他階段失敗就記錄錯誤
 
     print("\n📊 合併所有 coverage 檔案中...")
     combine_coverage_reports()
@@ -75,6 +80,10 @@ def main():
 
     generate_index_html()
     print("\n✅ 所有測試完成，報告已產出於 workspace/reports/ 下\n")
+
+    if has_error:
+        sys.exit(1)  # ❗只有非 e2e 失敗才會真正讓流程失敗
+
 
 
 
